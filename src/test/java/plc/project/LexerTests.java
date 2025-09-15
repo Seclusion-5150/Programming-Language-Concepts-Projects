@@ -41,9 +41,9 @@ public class LexerTests {
                 Arguments.of("Multiple Digits", "12345", true),
                 Arguments.of("Negative", "-1", true),
                 Arguments.of("Leading Zero", "01", false),
-                Arguments.of("Decimal", "123.456", false), // Should fail as integer
-                Arguments.of("Comma Separated", "1,234", false), // Should fail as integer
-                Arguments.of("Leading Zeros", "007", false), // Should fail as integer
+                Arguments.of("Decimal", "123.456", false), 
+                Arguments.of("Comma Separated", "1,234", false), 
+                Arguments.of("Leading Zeros", "007", false), 
                 Arguments.of("Zero", "0", true)
         );
     }
@@ -60,7 +60,7 @@ public class LexerTests {
                 Arguments.of("Negative Decimal", "-1.0", true),
                 Arguments.of("Trailing Decimal", "1.", false),
                 Arguments.of("Leading Decimal", ".5", false),
-                Arguments.of("Single Digit", "1", false), // Should fail as decimal
+                Arguments.of("Single Digit", "1", false), 
                 Arguments.of("Trailing Zeros", "7.000", true),
                 Arguments.of("Double Decimal", "1..0", false),
                 Arguments.of("Zero", "0.0", true)
@@ -80,7 +80,7 @@ public class LexerTests {
                 Arguments.of("Empty", "\'\'", false),
                 Arguments.of("Multiple", "\'abc\'", false),
                 Arguments.of("Unterminated", "'", false),
-                Arguments.of("Newline", "'\n'", false) // Actual newline character, not escape
+                Arguments.of("Newline", "'\n'", false) 
         );
     }
 
@@ -98,7 +98,7 @@ public class LexerTests {
                 Arguments.of("Unterminated", "\"unterminated", false),
                 Arguments.of("Invalid Escape", "\"invalid\\escape\"", false),
                 Arguments.of("Symbols", "\"!@#$%^&*()\"", true),
-                Arguments.of("Newline Unterminated", "\"unterminated\n\"", false) // Actual newline
+                Arguments.of("Newline Unterminated", "\"unterminated\n\"", false)
 
         );
     }
@@ -116,7 +116,7 @@ public class LexerTests {
                 Arguments.of("Comparison", "!=", true),
                 Arguments.of("Space", " ", false),
                 Arguments.of("Tab", "\t", false),
-                Arguments.of("Symbol", "$", false), // Assuming $ is not a valid operator
+                Arguments.of("Symbol", "$", false),
                 Arguments.of("Plus Sign", "+", true)
         );
     }

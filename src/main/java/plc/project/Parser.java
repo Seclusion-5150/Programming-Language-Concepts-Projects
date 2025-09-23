@@ -34,16 +34,72 @@ public final class Parser {
      * Parses the {@code source} rule.
      */
     public Ast.Source parseSource() throws ParseException {
+        List<Ast.Field> fields = new ArrayList<Ast.Field>();
+        List<Ast.Method> methods = new ArrayList<Ast.Method>();
 
-        throw new UnsupportedOperationException(); //TODO
+
+        while(peek("LET") || peek("DEF"))
+        {
+            if(peek("LET")) {
+                match("LET");
+                fields.add(parseField());
+            }
+            if(peek("DEF"))
+            {
+                match("DEF");
+                methods.add(parseMethod());
+            }
+
+        }
+
+
+        return new Ast.Source(fields, methods);
     }
+
 
     /**
      * Parses the {@code field} rule. This method should only be called if the
      * next tokens start a field, aka {@code LET}.
      */
     public Ast.Field parseField() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        boolean constant = false;
+        if(peek("CONST"))
+        {
+            match("CONST");
+            constant = true;
+        }
+        if(peek(Token.Type.IDENTIFIER))
+        {
+            String name = tokens.get(0).getLiteral();
+            match(Token.Type.IDENTIFIER);
+            if(peek("="))
+            {
+                match("=");
+                Optional<Ast.Expression> expr = Optional.of(parseExpression());
+                if(peek(";"))
+                {
+                    match(";");
+                    return new Ast.Field(name, constant, expr);
+                }
+                else if(!peek(";"))
+                {
+                    throw new ParseException("Expected Semicolon at: ", tokens.get(0).getIndex());
+                }
+
+            }
+
+            if(peek(";"))
+            {
+                match(";");
+
+                return new Ast.Field(name, constant,Optional.empty());
+            }
+            else if(!peek(";"))
+            {
+                throw new ParseException("Expected Semicolon at: ", tokens.get(0).getIndex());
+            }
+        }
+        throw new ParseException("Invalid Field at: ", tokens.get(0).getIndex()); //TODO
     }
 
     /**
@@ -51,7 +107,63 @@ public final class Parser {
      * next tokens start a method, aka {@code DEF}.
      */
     public Ast.Method parseMethod() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        if(peek(Token.Type.IDENTIFIER))
+        {
+            String name = tokens.get(0).getLiteral();
+            match(Token.Type.IDENTIFIER);
+            if(peek("("))
+            {
+                match("(");
+                List<String> parameters = new ArrayList<String>();
+                if(peek(Token.Type.IDENTIFIER)) {
+                    parameters.add(tokens.get(0).getLiteral());
+                    match(Token.Type.IDENTIFIER);
+                    while(peek(","))
+                    {
+                        match(",");
+                        if(peek(Token.Type.IDENTIFIER)) {
+                            parameters.add(tokens.get(0).getLiteral());
+                            match(Token.Type.IDENTIFIER);
+                        }
+                    }
+                }
+                if(peek(")"))
+                {
+                    match(")");
+
+                    if(peek("DO"))
+                    {
+                        match("DO");
+                        List<Ast.Statement> methodStatements = new ArrayList<Ast.Statement>();
+
+                        while(!peek("END"))
+                        {
+                            methodStatements.add(parseStatement());
+                        }
+                        if(peek("END"))
+                        {
+
+                            match("END");
+                            return new Ast.Method(name, parameters, methodStatements);
+                        }
+                        else if(!peek("END"))
+                        {
+                            throw new ParseException("Missing END Idenfitier at", tokens.get(-1).getIndex());
+                        }
+                    }
+                    else if(!peek("DO"))
+                    {
+                        throw new ParseException("Missing DO Idenfitier at", tokens.get(-1).getIndex());
+                    }
+                }
+                else if(!peek(")"))
+                {
+                    throw new ParseException("Expected Closing Parenthesis at: ", tokens.get(-1).getIndex());
+                }
+            }
+        }
+
+        throw new ParseException("Invalid Method", tokens.get(0).getIndex());
     }
 
     /**
@@ -61,27 +173,55 @@ public final class Parser {
      */
     public Ast.Statement parseStatement() throws ParseException {
         // First we have to determine what kind of statement the token is;
-        Ast.Expression expr = parseExpression();
 
-        if(peek("="))
-        {
-            match("=");
-            Ast.Expression expr2 = parseExpression();
-            if(peek(";")) {
-                match(";");
-                return new Ast.Statement.Assignment(expr, expr2);
-            }
-        }
-        else if (peek("LET"))
+        if (peek("LET"))
         {
             match("LET");
-            if(peek(Token.Type.IDENTIFIER))
-            {
-
-            }
+            return parseDeclarationStatement();
         }
+        else if(peek("IF"))
+        {
+            match("IF");
+            return parseIfStatement();
+        }
+        else if(peek("FOR"))
+        {
+            match("FOR");
+            return parseForStatement();
+        }
+        else if(peek("WHILE"))
+        {
+            match("WHILE");
+            return parseWhileStatement();
+        }
+        else if(peek("RETURN"))
+        {
+            match("RETURN");
+            return parseReturnStatement();
+        }
+        else
+        {
+            Ast.Expression expr = parseExpression();
 
-        return new Ast.Statement.Expression(expr);
+            if(peek("="))
+            {
+                match("=");
+                Ast.Expression expr2 = parseExpression();
+                if(peek(";")) {
+                    match(";");
+
+                    return new Ast.Statement.Assignment(expr, expr2);
+                }
+                else if (!peek(";")) throw new ParseException("Expected Semicolon at: ", tokens.get(0).getIndex());
+            }
+            if(peek(";")) {
+                match(";");
+                return new Ast.Statement.Expression(expr);
+            }
+            else if (!peek(";")) throw new ParseException("Expected Semicolon at: ", tokens.get(-1).getIndex());
+
+        }
+        throw new ParseException("Invalid Parse Statement at: ", tokens.get(0).getIndex());
     }
 
     /**
@@ -90,7 +230,26 @@ public final class Parser {
      * statement, aka {@code LET}.
      */
     public Ast.Statement.Declaration parseDeclarationStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+
+        if(peek(Token.Type.IDENTIFIER))
+        {
+            String name = tokens.get(0).getLiteral();
+            match(Token.Type.IDENTIFIER);
+            if (peek("="))
+            {
+                match("=");
+
+                Optional<Ast.Expression> expr2 = Optional.of(parseExpression());
+                if(match(";")) return new Ast.Statement.Declaration(name, expr2);
+                else if (!peek(";")) throw new ParseException("Expected Semicolon at: ", tokens.get(-1).getIndex());
+
+            }
+
+            if(peek(";")) return new Ast.Statement.Declaration(name, Optional.empty());
+            else if (!peek(";")) throw new ParseException("Expected Semicolon at: ", tokens.get(-1).getIndex());
+
+        }
+        throw new ParseException("Invalid Declaration Statement at: ", tokens.get(0).getIndex());
     }
 
     /**
@@ -99,7 +258,35 @@ public final class Parser {
      * {@code IF}.
      */
     public Ast.Statement.If parseIfStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression condition = parseExpression();
+        if(peek("DO"))
+        {
+            match("DO");
+            List<Ast.Statement> thenStatements = new ArrayList<Ast.Statement>();
+            List<Ast.Statement> elseStatements = new ArrayList<Ast.Statement>();
+
+            boolean isThen = true;
+
+            while(!peek("END"))
+            {
+
+                if(isThen) thenStatements.add(parseStatement());
+                else elseStatements.add(parseStatement());
+
+                if(peek("ELSE")) {
+                    isThen = false;
+                    match("ELSE");
+                }
+            }
+            if(peek("END"))
+            {
+                match("END");
+                return new Ast.Statement.If(condition, thenStatements, elseStatements);
+            }
+            else if (!peek("END")) throw new ParseException("Expected END Identifier at: ", tokens.get(-1).getIndex());
+
+        }
+        throw new ParseException("Invalid If Statement at: ", tokens.get(-1).getIndex());
     }
 
     /**
@@ -108,7 +295,61 @@ public final class Parser {
      * {@code FOR}.
      */
     public Ast.Statement.For parseForStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        if(peek("(")) {
+            match("(");
+            Ast.Statement initialization = null;
+            if(peek(Token.Type.IDENTIFIER))
+            {
+                match(Token.Type.IDENTIFIER);
+                if(peek("="))
+                {
+                    match("=");
+                    initialization = parseStatement();
+                }
+            }
+            if(peek(";"))
+            {
+                match(";");
+                Ast.Expression condition = parseExpression();
+
+                if(peek(";"))
+                {
+                    Ast.Statement increment = null;
+                    match(";");
+                    if(peek(Token.Type.IDENTIFIER))
+                    {
+                        match(Token.Type.IDENTIFIER);
+                        if(peek("="))
+                        {
+                            match("=");
+                            increment = parseStatement();
+                        }
+                    }
+                    if(peek(")"))
+                    {
+                        match(")");
+                        List<Ast.Statement> forStatements = new ArrayList<Ast.Statement>();
+                        while(!peek("END"))
+                        {
+                            forStatements.add(parseStatement());
+                        }
+                        if(peek("END"))
+                        {
+                            match("END");
+                            return new Ast.Statement.For(initialization, condition, increment, forStatements);
+                        }
+                        else if (!peek("END")) throw new ParseException("Expected END Identifier at: ", tokens.get(-1).getIndex());
+                    }
+                    else if (!peek(")")) throw new ParseException("Expected Closing Parenthesis at: ", tokens.get(-1).getIndex());
+
+                }
+                else if (!peek(";")) throw new ParseException("Expected Semicolon at: ", tokens.get(-1).getIndex());
+
+            }
+            else if (!peek(";")) throw new ParseException("Expected Semicolon at: ", tokens.get(-1).getIndex());
+
+        }
+        throw new ParseException("Invalid For Statement at: ", tokens.get(0).getIndex());
     }
 
     /**
@@ -117,7 +358,25 @@ public final class Parser {
      * {@code WHILE}.
      */
     public Ast.Statement.While parseWhileStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression condition = parseExpression();
+        if(peek("DO"))
+        {
+            match("DO");
+            List<Ast.Statement> whileStatements = new ArrayList<Ast.Statement>();
+            while(!peek("END"))
+            {
+                whileStatements.add(parseStatement());
+            }
+            if(peek("END")) {
+                match("END");
+
+                return new Ast.Statement.While(condition, whileStatements);
+            }
+            else if (!peek("END")) throw new ParseException("Expected END Identifier at: ", tokens.get(-1).getIndex());
+        }
+        else if (!peek("DO")) throw new ParseException("Expected DO Identifier at: ", tokens.get(-1).getIndex());
+
+        throw new ParseException("Invalid While Statement", tokens.get(-1).getIndex());
     }
 
     /**
@@ -126,7 +385,13 @@ public final class Parser {
      * {@code RETURN}.
      */
     public Ast.Statement.Return parseReturnStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+
+        Ast.Expression expr = parseExpression();
+        if(peek(";")) {
+            match(";");
+            return new Ast.Statement.Return(expr);
+        }
+        throw new ParseException("Expected Semicolon at: ", tokens.get(-1).getIndex());
     }
 
     /**
@@ -158,40 +423,16 @@ public final class Parser {
      * Parses the {@code equality-expression} rule.
      */
     public Ast.Expression parseEqualityExpression() throws ParseException {
-       Ast.Expression expr = parseAdditiveExpression();
 
-        if(peek("<"))
+        Ast.Expression expr = parseAdditiveExpression();
+        while(peek("<") || peek("<=") ||
+                peek(">") || peek(">=") ||
+        peek("!=") || peek("=="))
         {
-            match("<");
-
-            return new Ast.Expression.Binary(tokens.get(-1).getLiteral(), expr, parseAdditiveExpression());
-        }
-        else if(peek("<="))
-        {
-            match("<=");
-            return new Ast.Expression.Binary(tokens.get(-1).getLiteral(), expr, parseAdditiveExpression());
-        }
-        else if(peek(">="))
-        {
-            match(">=");
-            return new Ast.Expression.Binary(tokens.get(-1).getLiteral(), expr, parseAdditiveExpression());
-        }
-        else if(peek(">"))
-        {
-            match(">");
-
-            return new Ast.Expression.Binary(tokens.get(-1).getLiteral(), expr, parseAdditiveExpression());
-        }
-        else if(peek("!="))
-        {
-            match("!=");
-
-            return new Ast.Expression.Binary(tokens.get(-1).getLiteral(), expr, parseAdditiveExpression());
-        }
-        else if(peek("=="))
-        {
-            match("==");
-            return new Ast.Expression.Binary(tokens.get(-1).getLiteral(), expr, parseAdditiveExpression());
+            String operator = tokens.get(0).getLiteral();
+            match(operator);
+            Ast.Expression expr2 = parseAdditiveExpression();
+            expr = new Ast.Expression.Binary(operator, expr, expr2);
         }
 
        return expr;
@@ -248,7 +489,6 @@ public final class Parser {
                     List<Ast.Expression> secondaryArguments = new ArrayList<Ast.Expression>();
 
                     secondaryArguments.add(parseExpression());
-                    System.out.println(tokens.get(0).getLiteral());
                     while(peek(","))
                     {
                         match(",");
@@ -256,6 +496,7 @@ public final class Parser {
                     }
                     if(peek(")"))
                     {
+                        secondaryArguments.removeIf(element -> element instanceof Ast.Expression.Literal);
                         Optional<Ast.Expression> method = Optional.of(new Ast.Expression.Access(Optional.empty(), name1));
                         return new Ast.Expression.Function(method, name2, secondaryArguments);
                     }
@@ -265,7 +506,7 @@ public final class Parser {
 
                 return new Ast.Expression.Access(receiver, tokens.get(-1).getLiteral());
             }
-            throw new ParseException("Identifier Expected After '.' Operator.", tokens.index);
+            throw new ParseException("Identifier Expected After '.' Operator.", tokens.get(-1).getIndex());
         }
         return expr;
     }
@@ -326,7 +567,8 @@ public final class Parser {
 
             if (match(")")) return new Ast.Expression.Group(expr);
 
-            throw new ParseException("Primary Expression Error", tokens.index);
+            throw new ParseException("Expected Closing Parenthesis at: ", tokens.get(-1).getIndex());
+
         } else if (peek(Token.Type.IDENTIFIER)) {
             String name = tokens.get(0).getLiteral();
             match(Token.Type.IDENTIFIER);
@@ -349,6 +591,7 @@ public final class Parser {
                 if (match(")")) {
                     return new Ast.Expression.Function(Optional.empty(), name, arguments);
                 }
+                throw new ParseException("Expected Closing Parenthesis at: ", tokens.get(-1).getIndex());
             }
             else return new Ast.Expression.Access(Optional.empty(), tokens.get(-1).getLiteral());
         }
@@ -356,7 +599,7 @@ public final class Parser {
         {
             return new Ast.Expression.Literal("");
         }
-        throw new ParseException("Invalid Primary Expression.", tokens.index);
+        throw new ParseException("Expected Closing Parenthesis at: ", tokens.get(0).getIndex());
 }
 
 

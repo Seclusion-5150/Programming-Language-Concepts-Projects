@@ -271,4 +271,223 @@ final class ParserExpressionTests {
         }
     }
 
+    @ParameterizedTest
+    @MethodSource
+    void testOperatorPrecedence(String test, List<Token> tokens, Ast.Expression expected) {
+        test(tokens, expected, Parser::parseExpression);
+    }
+
+    private static Stream<Arguments> testOperatorPrecedence() {
+        return Stream.of(
+                Arguments.of("Addition and Multiplication",
+                        Arrays.asList(
+                                // 1 + 2 * 3
+                                new Token(Token.Type.INTEGER, "1", 0),
+                                new Token(Token.Type.OPERATOR, "+", 2),
+                                new Token(Token.Type.INTEGER, "2", 4),
+                                new Token(Token.Type.OPERATOR, "*", 6),
+                                new Token(Token.Type.INTEGER, "3", 8)
+                        ),
+                        new Ast.Expression.Binary("+",
+                                new Ast.Expression.Literal(new BigInteger("1")),
+                                new Ast.Expression.Binary("*",
+                                        new Ast.Expression.Literal(new BigInteger("2")),
+                                        new Ast.Expression.Literal(new BigInteger("3"))
+                                )
+                        )
+                ),
+                Arguments.of("Comparison and Addition",
+                        Arrays.asList(
+                                // x < y + z
+                                new Token(Token.Type.IDENTIFIER, "x", 0),
+                                new Token(Token.Type.OPERATOR, "<", 2),
+                                new Token(Token.Type.IDENTIFIER, "y", 4),
+                                new Token(Token.Type.OPERATOR, "+", 6),
+                                new Token(Token.Type.IDENTIFIER, "z", 8)
+                        ),
+                        new Ast.Expression.Binary("<",
+                                new Ast.Expression.Access(Optional.empty(), "x"),
+                                new Ast.Expression.Binary("+",
+                                        new Ast.Expression.Access(Optional.empty(), "y"),
+                                        new Ast.Expression.Access(Optional.empty(), "z")
+                                )
+                        )
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testLeftAssociativity(String test, List<Token> tokens, Ast.Expression expected) {
+        test(tokens, expected, Parser::parseExpression);
+    }
+
+    private static Stream<Arguments> testLeftAssociativity() {
+        return Stream.of(
+                Arguments.of("Addition Left Associative",
+                        Arrays.asList(
+                                // 1 + 2 + 3
+                                new Token(Token.Type.INTEGER, "1", 0),
+                                new Token(Token.Type.OPERATOR, "+", 2),
+                                new Token(Token.Type.INTEGER, "2", 4),
+                                new Token(Token.Type.OPERATOR, "+", 6),
+                                new Token(Token.Type.INTEGER, "3", 8)
+                        ),
+                        new Ast.Expression.Binary("+",
+                                new Ast.Expression.Binary("+",
+                                        new Ast.Expression.Literal(new BigInteger("1")),
+                                        new Ast.Expression.Literal(new BigInteger("2"))
+                                ),
+                                new Ast.Expression.Literal(new BigInteger("3"))
+                        )
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testAllComparisonOperators(String test, List<Token> tokens, Ast.Expression expected) {
+        test(tokens, expected, Parser::parseExpression);
+    }
+
+    private static Stream<Arguments> testAllComparisonOperators() {
+        return Stream.of(
+                Arguments.of("Less Than",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "x", 0),
+                                new Token(Token.Type.OPERATOR, "<", 2),
+                                new Token(Token.Type.IDENTIFIER, "y", 4)
+                        ),
+                        new Ast.Expression.Binary("<",
+                                new Ast.Expression.Access(Optional.empty(), "x"),
+                                new Ast.Expression.Access(Optional.empty(), "y")
+                        )
+                ),
+                Arguments.of("Less Than or Equal",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "x", 0),
+                                new Token(Token.Type.OPERATOR, "<=", 2),
+                                new Token(Token.Type.IDENTIFIER, "y", 5)
+                        ),
+                        new Ast.Expression.Binary("<=",
+                                new Ast.Expression.Access(Optional.empty(), "x"),
+                                new Ast.Expression.Access(Optional.empty(), "y")
+                        )
+                ),
+                Arguments.of("Greater Than",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "x", 0),
+                                new Token(Token.Type.OPERATOR, ">", 2),
+                                new Token(Token.Type.IDENTIFIER, "y", 4)
+                        ),
+                        new Ast.Expression.Binary(">",
+                                new Ast.Expression.Access(Optional.empty(), "x"),
+                                new Ast.Expression.Access(Optional.empty(), "y")
+                        )
+                ),
+                Arguments.of("Not Equal",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "x", 0),
+                                new Token(Token.Type.OPERATOR, "!=", 2),
+                                new Token(Token.Type.IDENTIFIER, "y", 5)
+                        ),
+                        new Ast.Expression.Binary("!=",
+                                new Ast.Expression.Access(Optional.empty(), "x"),
+                                new Ast.Expression.Access(Optional.empty(), "y")
+                        )
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testLogicalOperators(String test, List<Token> tokens, Ast.Expression expected) {
+        test(tokens, expected, Parser::parseExpression);
+    }
+
+    private static Stream<Arguments> testLogicalOperators() {
+        return Stream.of(
+                Arguments.of("Logical AND",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "x", 0),
+                                new Token(Token.Type.OPERATOR, "AND", 2),
+                                new Token(Token.Type.IDENTIFIER, "y", 6)
+                        ),
+                        new Ast.Expression.Binary("AND",
+                                new Ast.Expression.Access(Optional.empty(), "x"),
+                                new Ast.Expression.Access(Optional.empty(), "y")
+                        )
+                ),
+                Arguments.of("Logical OR",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "x", 0),
+                                new Token(Token.Type.OPERATOR, "OR", 2),
+                                new Token(Token.Type.IDENTIFIER, "y", 5)
+                        ),
+                        new Ast.Expression.Binary("OR",
+                                new Ast.Expression.Access(Optional.empty(), "x"),
+                                new Ast.Expression.Access(Optional.empty(), "y")
+                        )
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testMissingLiterals(String test, List<Token> tokens, Ast.Expression expected) {
+        test(tokens, expected, Parser::parseExpression);
+    }
+
+    private static Stream<Arguments> testMissingLiterals() {
+        return Stream.of(
+                Arguments.of("NIL Literal",
+                        Arrays.asList(new Token(Token.Type.IDENTIFIER, "NIL", 0)),
+                        new Ast.Expression.Literal(null)
+                ),
+                Arguments.of("FALSE Literal",
+                        Arrays.asList(new Token(Token.Type.IDENTIFIER, "FALSE", 0)),
+                        new Ast.Expression.Literal(Boolean.FALSE)
+                ),
+                Arguments.of("Negative Integer",
+                        Arrays.asList(new Token(Token.Type.INTEGER, "-42", 0)),
+                        new Ast.Expression.Literal(new BigInteger("-42"))
+                ),
+                Arguments.of("Negative Decimal",
+                        Arrays.asList(new Token(Token.Type.DECIMAL, "-3.14", 0)),
+                        new Ast.Expression.Literal(new BigDecimal("-3.14"))
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testMethodCallsOnObjects(String test, List<Token> tokens, Ast.Expression expected) {
+        test(tokens, expected, Parser::parseExpression);
+    }
+
+    private static Stream<Arguments> testMethodCallsOnObjects() {
+        return Stream.of(
+                Arguments.of("Method Call with Arguments",
+                        Arrays.asList(
+                                // obj.method(arg1, arg2)
+                                new Token(Token.Type.IDENTIFIER, "obj", 0),
+                                new Token(Token.Type.OPERATOR, ".", 3),
+                                new Token(Token.Type.IDENTIFIER, "method", 4),
+                                new Token(Token.Type.OPERATOR, "(", 10),
+                                new Token(Token.Type.IDENTIFIER, "arg1", 11),
+                                new Token(Token.Type.OPERATOR, ",", 15),
+                                new Token(Token.Type.IDENTIFIER, "arg2", 17),
+                                new Token(Token.Type.OPERATOR, ")", 21)
+                        ),
+                        new Ast.Expression.Function(
+                                Optional.of(new Ast.Expression.Access(Optional.empty(), "obj")),
+                                "method",
+                                Arrays.asList(
+                                        new Ast.Expression.Access(Optional.empty(), "arg1"),
+                                        new Ast.Expression.Access(Optional.empty(), "arg2")
+                                )
+                        )
+                )
+        );
+    }
 }

@@ -1,6 +1,13 @@
 package plc.project;
 
+import java.lang.reflect.Array;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+
+import static java.lang.Boolean.parseBoolean;
 
 /**
  * The parser takes the sequence of tokens emitted by the lexer and turns that
@@ -27,6 +34,7 @@ public final class Parser {
      * Parses the {@code source} rule.
      */
     public Ast.Source parseSource() throws ParseException {
+
         throw new UnsupportedOperationException(); //TODO
     }
 
@@ -52,7 +60,20 @@ public final class Parser {
      * statement, then it is an expression/assignment statement.
      */
     public Ast.Statement parseStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        // First we have to determine what kind of statement the token is;
+        Ast.Expression expr = parseExpression();
+
+        if(peek("="))
+        {
+            match("=");
+            Ast.Expression expr2 = parseExpression();
+            if(peek(";")) {
+                match(";");
+                return new Ast.Statement.Assignment(expr, expr2);
+            }
+        }
+
+        return new Ast.Statement.Expression(expr);
     }
 
     /**
@@ -104,42 +125,233 @@ public final class Parser {
      * Parses the {@code expression} rule.
      */
     public Ast.Expression parseExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression expr = parseLogicalExpression();
+        return expr;
     }
 
     /**
      * Parses the {@code logical-expression} rule.
      */
     public Ast.Expression parseLogicalExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression expr = parseEqualityExpression();
+
+        if(peek("AND"))
+        {
+            match("AND");
+            return new Ast.Expression.Binary(tokens.get(-1).getLiteral(), expr, parseEqualityExpression());
+        }
+        else if(peek("OR"))
+        {
+            match("OR");
+            return new Ast.Expression.Binary(tokens.get(-1).getLiteral(), expr, parseEqualityExpression());
+        }
+        else if(peek("&&"))
+        {
+            match("&&");
+            return new Ast.Expression.Binary(tokens.get(-1).getLiteral(), expr, parseEqualityExpression());
+
+        }
+        else if(peek("||"))
+        {
+            match("||");
+            return new Ast.Expression.Binary(tokens.get(-1).getLiteral(), expr, parseEqualityExpression());
+
+        }
+
+        return expr;
     }
 
     /**
      * Parses the {@code equality-expression} rule.
      */
     public Ast.Expression parseEqualityExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+       Ast.Expression expr = parseAdditiveExpression();
+
+        if(peek("<"))
+        {
+            match("<");
+
+            return new Ast.Expression.Binary(tokens.get(-1).getLiteral(), expr, parseAdditiveExpression());
+        }
+        else if(peek("<="))
+        {
+            match("<=");
+            return new Ast.Expression.Binary(tokens.get(-1).getLiteral(), expr, parseAdditiveExpression());
+        }
+        else if(peek(">="))
+        {
+            match(">=");
+            return new Ast.Expression.Binary(tokens.get(-1).getLiteral(), expr, parseAdditiveExpression());
+        }
+        else if(peek(">"))
+        {
+            match(">");
+
+            return new Ast.Expression.Binary(tokens.get(-1).getLiteral(), expr, parseAdditiveExpression());
+        }
+        else if(peek("!="))
+        {
+            match("!=");
+
+            return new Ast.Expression.Binary(tokens.get(-1).getLiteral(), expr, parseAdditiveExpression());
+        }
+        else if(peek("=="))
+        {
+            match("==");
+            return new Ast.Expression.Binary(tokens.get(-1).getLiteral(), expr, parseAdditiveExpression());
+        }
+
+       return expr;
     }
 
     /**
      * Parses the {@code additive-expression} rule.
      */
     public Ast.Expression parseAdditiveExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression expr = parseMultiplicativeExpression();
+
+        if(peek("+"))
+        {
+            match("+");
+            List<Ast.Expression> literals = new ArrayList<Ast.Expression>();
+            literals.add(expr);
+            literals.add(parseMultiplicativeExpression());
+            if(peek("+")) {
+
+
+                while (peek("+")) {
+                    match("+");
+                    literals.add(parseMultiplicativeExpression());
+                }
+                List<Ast.Expression.Binary> bin = new ArrayList<Ast.Expression.Binary>();
+
+                for (int i = 2; i < literals.size(); i += 2) {
+                    bin.add(new Ast.Expression.Binary("+", literals.get(i - 2), literals.get(i - 1)));
+                }
+
+                if (literals.size() % 2 != 0)
+                    bin.add(new Ast.Expression.Binary("+", bin.getLast(), literals.getLast()));
+
+                return bin.getLast();
+            }
+            return new Ast.Expression.Binary("+", literals.get(0), literals.get(1));
+        }
+        else if(peek("-"))
+        {
+            match("-");
+            List<Ast.Expression> literals = new ArrayList<Ast.Expression>();
+            literals.add(expr);
+            literals.add(parseMultiplicativeExpression());
+            if(peek("-")) {
+
+
+                while (peek("-")) {
+                    match("-");
+                    literals.add(parseMultiplicativeExpression());
+                }
+                List<Ast.Expression.Binary> bin = new ArrayList<Ast.Expression.Binary>();
+
+                for (int i = 2; i < literals.size(); i += 2) {
+                    bin.add(new Ast.Expression.Binary("-", literals.get(i - 2), literals.get(i - 1)));
+                }
+
+                return bin.getLast();
+            }
+            return new Ast.Expression.Binary("-", literals.get(0), literals.get(1));
+        }
+
+        return expr;
     }
 
     /**
      * Parses the {@code multiplicative-expression} rule.
      */
     public Ast.Expression parseMultiplicativeExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression expr = parseSecondaryExpression();
+        if(peek("*"))
+        {
+            match("*");
+            List<Ast.Expression> literals = new ArrayList<Ast.Expression>();
+            literals.add(expr);
+            literals.add(parseSecondaryExpression());
+            if(peek("*")) {
+                while (peek("*")) {
+                    match("*");
+                    literals.add(parseSecondaryExpression());
+                }
+                List<Ast.Expression.Binary> bin = new ArrayList<Ast.Expression.Binary>();
+
+                for (int i = 2; i < literals.size(); i += 2) {
+                    bin.add(new Ast.Expression.Binary("*", literals.get(i - 2), literals.get(i - 1)));
+                }
+
+                return bin.getLast();
+            }
+            return new Ast.Expression.Binary("*", literals.get(0), literals.get(1));
+        }
+        else if(peek("/"))
+        {
+            match("/");
+            List<Ast.Expression> literals = new ArrayList<Ast.Expression>();
+            literals.add(expr);
+            literals.add(parseSecondaryExpression());
+            if(peek("/")) {
+                while (peek("/")) {
+                    match("/");
+                    literals.add(parseSecondaryExpression());
+                }
+                List<Ast.Expression.Binary> bin = new ArrayList<Ast.Expression.Binary>();
+
+                for (int i = 2; i < literals.size(); i += 2) {
+                    bin.add(new Ast.Expression.Binary("/", literals.get(i - 2), literals.get(i - 1)));
+                }
+
+                return bin.getLast();
+            }
+            return new Ast.Expression.Binary("/", literals.get(0), literals.get(1));
+        }
+
+        return expr;
     }
 
     /**
      * Parses the {@code secondary-expression} rule.
      */
     public Ast.Expression parseSecondaryExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression expr = parsePrimaryExpression();
+        if(peek(".")) {
+            String name1 = tokens.get(-1).getLiteral();
+            match(".");
+
+            if (peek(Token.Type.IDENTIFIER)) {
+                match(Token.Type.IDENTIFIER);
+                if(peek("("))
+                {
+                    String name2 = tokens.get(-1).getLiteral();
+                    match("(");
+                    List<Ast.Expression> secondaryArguments = new ArrayList<Ast.Expression>();
+
+                    secondaryArguments.add(parseExpression());
+                    System.out.println(tokens.get(0).getLiteral());
+                    while(peek(","))
+                    {
+                        match(",");
+                        secondaryArguments.add(parseExpression());
+                    }
+                    if(peek(")"))
+                    {
+                        Optional<Ast.Expression> method = Optional.of(new Ast.Expression.Access(Optional.empty(), name1));
+                        return new Ast.Expression.Function(method, name2, secondaryArguments);
+                    }
+                }
+
+                Optional<Ast.Expression> receiver = Optional.of(expr);
+
+                return new Ast.Expression.Access(receiver, tokens.get(-1).getLiteral());
+            }
+            throw new ParseException("Identifier Expected After '.' Operator.", tokens.index);
+        }
+        return expr;
     }
 
     /**
@@ -149,8 +361,90 @@ public final class Parser {
      * not strictly necessary.
      */
     public Ast.Expression parsePrimaryExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
-    }
+
+        String _nil = "NIL";
+        String _true = "TRUE";
+        String _false = "FALSE";
+
+        if (peek(_nil)) {
+            match(_nil);
+            return new Ast.Expression.Literal(null);
+        } else if (peek(_true)) {
+            match(_true);
+            return new Ast.Expression.Literal(true);
+        } else if (peek(_false)) {
+            match(_false);
+            return new Ast.Expression.Literal(false);
+        } else if (peek(Token.Type.INTEGER)) {
+            match(Token.Type.INTEGER);
+            return new Ast.Expression.Literal(new BigInteger(tokens.get(-1).getLiteral()));
+        } else if (peek(Token.Type.DECIMAL)) {
+            match(Token.Type.DECIMAL);
+            return new Ast.Expression.Literal(new BigDecimal(tokens.get(-1).getLiteral()));
+        } else if (peek(Token.Type.CHARACTER)) {
+            match(Token.Type.CHARACTER);
+            String processed = tokens.get(-1).getLiteral();
+            processed = processed.replace("\\n", "\n")
+                    .replace("\\t", "\t")
+                    .replace("\\r", "\r")
+                    .replace("'", "")
+                    .replace("\\", "\"")
+                    .replace("\"", "");
+
+            return new Ast.Expression.Literal(processed.charAt(0));
+        } else if (peek(Token.Type.STRING)) {
+            match(Token.Type.STRING);
+            String processed = tokens.get(-1).getLiteral();
+            processed = processed.replace("\\n", "\n")
+                    .replace("\\t", "\t")
+                    .replace("\\r", "\r")
+                    .replace("'", "")
+                    .replace("\\", "\"")
+                    .replace("\"", "");
+
+            return new Ast.Expression.Literal(processed);
+        } else if (peek("(")) {
+            match("(");
+
+            Ast.Expression expr = parseExpression();
+
+            if (match(")")) return new Ast.Expression.Group(expr);
+
+            throw new ParseException("Primary Expression Error", tokens.index);
+        } else if (peek(Token.Type.IDENTIFIER)) {
+            String name = tokens.get(0).getLiteral();
+            match(Token.Type.IDENTIFIER);
+
+            if (peek("(")) {
+                match("(");
+
+                List<Ast.Expression> arguments = new ArrayList<Ast.Expression>();
+                arguments.add(parseExpression());
+
+                while (peek(",")) {
+                    match(",");
+
+                    arguments.add(parseExpression());
+
+                }
+
+                arguments.removeIf(element -> (element instanceof Ast.Expression.Literal));
+
+                if (match(")")) {
+                    return new Ast.Expression.Function(Optional.empty(), name, arguments);
+                }
+            }
+            else return new Ast.Expression.Access(Optional.empty(), tokens.get(-1).getLiteral());
+        }
+        else if(peek(")"))
+        {
+            return new Ast.Expression.Literal("");
+        }
+        throw new ParseException("Invalid Primary Expression.", tokens.index);
+}
+
+
+
 
     /**
      * As in the lexer, returns {@code true} if the current sequence of tokens
@@ -163,7 +457,32 @@ public final class Parser {
      * {@code peek(Token.Type.IDENTIFIER)} and {@code peek("literal")}.
      */
     private boolean peek(Object... patterns) {
-        throw new UnsupportedOperationException(); //TODO (in lecture)
+        for(int i = 0; i < patterns.length;i++)
+        {
+            if(!tokens.has(i))
+            {
+                return false;
+            }
+            else if (patterns[i] instanceof Token.Type)
+            {
+                if(patterns[i] != tokens.get(i).getType())
+                {
+                    return false;
+                }
+            }
+            else if (patterns[i] instanceof String)
+            {
+                if(!patterns[i].equals(tokens.get(i).getLiteral()))
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                throw new AssertionError("Invalid pattern object: " + patterns[i].getClass());
+            }
+        }
+        return true;
     }
 
     /**
@@ -171,7 +490,16 @@ public final class Parser {
      * and advances the token stream.
      */
     private boolean match(Object... patterns) {
-        throw new UnsupportedOperationException(); //TODO (in lecture)
+        boolean peek = peek(patterns);
+
+        if(peek)
+        {
+            for(int i = 0; i < patterns.length; i++)
+            {
+                tokens.advance();
+            }
+        }
+        return peek;
     }
 
     private static final class TokenStream {
@@ -186,6 +514,7 @@ public final class Parser {
         /**
          * Returns true if there is a token at index + offset.
          */
+
         public boolean has(int offset) {
             return index + offset < tokens.size();
         }

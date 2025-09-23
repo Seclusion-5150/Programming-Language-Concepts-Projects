@@ -490,4 +490,132 @@ final class ParserExpressionTests {
                 )
         );
     }
+    @ParameterizedTest
+    @MethodSource
+    void testChainedLogicalOperators(String test, List<Token> tokens, Ast.Expression expected) {
+        test(tokens, expected, Parser::parseExpression);
+    }
+
+    private static Stream<Arguments> testChainedLogicalOperators() {
+        return Stream.of(
+                Arguments.of("Chained AND",
+                        Arrays.asList(
+                                // a AND b AND c
+                                new Token(Token.Type.IDENTIFIER, "a", 0),
+                                new Token(Token.Type.IDENTIFIER, "AND", 2),
+                                new Token(Token.Type.IDENTIFIER, "b", 6),
+                                new Token(Token.Type.IDENTIFIER, "AND", 8),
+                                new Token(Token.Type.IDENTIFIER, "c", 12)
+                        ),
+                        new Ast.Expression.Binary("AND",
+                                new Ast.Expression.Binary("AND",
+                                        new Ast.Expression.Access(Optional.empty(), "a"),
+                                        new Ast.Expression.Access(Optional.empty(), "b")
+                                ),
+                                new Ast.Expression.Access(Optional.empty(), "c")
+                        )
+                ),
+                Arguments.of("Chained OR",
+                        Arrays.asList(
+                                // x OR y OR z
+                                new Token(Token.Type.IDENTIFIER, "x", 0),
+                                new Token(Token.Type.IDENTIFIER, "OR", 2),
+                                new Token(Token.Type.IDENTIFIER, "y", 5),
+                                new Token(Token.Type.IDENTIFIER, "OR", 7),
+                                new Token(Token.Type.IDENTIFIER, "z", 10)
+                        ),
+                        new Ast.Expression.Binary("OR",
+                                new Ast.Expression.Binary("OR",
+                                        new Ast.Expression.Access(Optional.empty(), "x"),
+                                        new Ast.Expression.Access(Optional.empty(), "y")
+                                ),
+                                new Ast.Expression.Access(Optional.empty(), "z")
+                        )
+                ),
+                Arguments.of("Mixed AND OR",
+                        Arrays.asList(
+                                // a AND b OR c
+                                new Token(Token.Type.IDENTIFIER, "a", 0),
+                                new Token(Token.Type.IDENTIFIER, "AND", 2),
+                                new Token(Token.Type.IDENTIFIER, "b", 6),
+                                new Token(Token.Type.IDENTIFIER, "OR", 8),
+                                new Token(Token.Type.IDENTIFIER, "c", 11)
+                        ),
+                        new Ast.Expression.Binary("OR",
+                                new Ast.Expression.Binary("AND",
+                                        new Ast.Expression.Access(Optional.empty(), "a"),
+                                        new Ast.Expression.Access(Optional.empty(), "b")
+                                ),
+                                new Ast.Expression.Access(Optional.empty(), "c")
+                        )
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testChainedArithmetic(String test, List<Token> tokens, Ast.Expression expected) {
+        test(tokens, expected, Parser::parseExpression);
+    }
+
+    private static Stream<Arguments> testChainedArithmetic() {
+        return Stream.of(
+                Arguments.of("Three Addition Chain",
+                        Arrays.asList(
+                                // 1 + 2 + 3
+                                new Token(Token.Type.INTEGER, "1", 0),
+                                new Token(Token.Type.OPERATOR, "+", 2),
+                                new Token(Token.Type.INTEGER, "2", 4),
+                                new Token(Token.Type.OPERATOR, "+", 6),
+                                new Token(Token.Type.INTEGER, "3", 8)
+                        ),
+                        new Ast.Expression.Binary("+",
+                                new Ast.Expression.Binary("+",
+                                        new Ast.Expression.Literal(new BigInteger("1")),
+                                        new Ast.Expression.Literal(new BigInteger("2"))
+                                ),
+                                new Ast.Expression.Literal(new BigInteger("3"))
+                        )
+                ),
+                Arguments.of("Three Subtraction Chain",
+                        Arrays.asList(
+                                // 10 - 3 - 2
+                                new Token(Token.Type.INTEGER, "10", 0),
+                                new Token(Token.Type.OPERATOR, "-", 3),
+                                new Token(Token.Type.INTEGER, "3", 5),
+                                new Token(Token.Type.OPERATOR, "-", 7),
+                                new Token(Token.Type.INTEGER, "2", 9)
+                        ),
+                        new Ast.Expression.Binary("-",
+                                new Ast.Expression.Binary("-",
+                                        new Ast.Expression.Literal(new BigInteger("10")),
+                                        new Ast.Expression.Literal(new BigInteger("3"))
+                                ),
+                                new Ast.Expression.Literal(new BigInteger("2"))
+                        )
+                ),
+                Arguments.of("Four Addition Chain",
+                        Arrays.asList(
+                                // 1 + 2 + 3 + 4
+                                new Token(Token.Type.INTEGER, "1", 0),
+                                new Token(Token.Type.OPERATOR, "+", 2),
+                                new Token(Token.Type.INTEGER, "2", 4),
+                                new Token(Token.Type.OPERATOR, "+", 6),
+                                new Token(Token.Type.INTEGER, "3", 8),
+                                new Token(Token.Type.OPERATOR, "+", 10),
+                                new Token(Token.Type.INTEGER, "4", 12)
+                        ),
+                        new Ast.Expression.Binary("+",
+                                new Ast.Expression.Binary("+",
+                                        new Ast.Expression.Binary("+",
+                                                new Ast.Expression.Literal(new BigInteger("1")),
+                                                new Ast.Expression.Literal(new BigInteger("2"))
+                                        ),
+                                        new Ast.Expression.Literal(new BigInteger("3"))
+                                ),
+                                new Ast.Expression.Literal(new BigInteger("4"))
+                        )
+                )
+        );
+    }
 }

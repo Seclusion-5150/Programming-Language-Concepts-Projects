@@ -135,27 +135,12 @@ public final class Parser {
     public Ast.Expression parseLogicalExpression() throws ParseException {
         Ast.Expression expr = parseEqualityExpression();
 
-        if(peek("AND"))
+        while(peek("AND") || peek("OR") || peek("&&") || peek("||"))
         {
-            match("AND");
-            return new Ast.Expression.Binary(tokens.get(-1).getLiteral(), expr, parseEqualityExpression());
-        }
-        else if(peek("OR"))
-        {
-            match("OR");
-            return new Ast.Expression.Binary(tokens.get(-1).getLiteral(), expr, parseEqualityExpression());
-        }
-        else if(peek("&&"))
-        {
-            match("&&");
-            return new Ast.Expression.Binary(tokens.get(-1).getLiteral(), expr, parseEqualityExpression());
-
-        }
-        else if(peek("||"))
-        {
-            match("||");
-            return new Ast.Expression.Binary(tokens.get(-1).getLiteral(), expr, parseEqualityExpression());
-
+            String operator = tokens.get(0).getLiteral();
+            match(operator);
+            Ast.Expression expr2 = parseMultiplicativeExpression();
+            expr = new Ast.Expression.Binary(operator, expr, expr2);
         }
 
         return expr;
@@ -208,58 +193,16 @@ public final class Parser {
      * Parses the {@code additive-expression} rule.
      */
     public Ast.Expression parseAdditiveExpression() throws ParseException {
+
         Ast.Expression expr = parseMultiplicativeExpression();
 
-        if(peek("+"))
+        while(peek("+") || peek("-"))
         {
-            match("+");
-            List<Ast.Expression> literals = new ArrayList<Ast.Expression>();
-            literals.add(expr);
-            literals.add(parseMultiplicativeExpression());
-            if(peek("+")) {
-
-
-                while (peek("+")) {
-                    match("+");
-                    literals.add(parseMultiplicativeExpression());
-                }
-                List<Ast.Expression.Binary> bin = new ArrayList<Ast.Expression.Binary>();
-
-                for (int i = 2; i < literals.size(); i += 2) {
-                    bin.add(new Ast.Expression.Binary("+", literals.get(i - 2), literals.get(i - 1)));
-                }
-
-                if (literals.size() % 2 != 0)
-                    bin.add(new Ast.Expression.Binary("+", bin.getLast(), literals.getLast()));
-
-                return bin.getLast();
-            }
-            return new Ast.Expression.Binary("+", literals.get(0), literals.get(1));
+            String operator = tokens.get(0).getLiteral();
+            match(operator);
+            Ast.Expression expr2 = parseMultiplicativeExpression();
+            expr = new Ast.Expression.Binary(operator, expr, expr2);
         }
-        else if(peek("-"))
-        {
-            match("-");
-            List<Ast.Expression> literals = new ArrayList<Ast.Expression>();
-            literals.add(expr);
-            literals.add(parseMultiplicativeExpression());
-            if(peek("-")) {
-
-
-                while (peek("-")) {
-                    match("-");
-                    literals.add(parseMultiplicativeExpression());
-                }
-                List<Ast.Expression.Binary> bin = new ArrayList<Ast.Expression.Binary>();
-
-                for (int i = 2; i < literals.size(); i += 2) {
-                    bin.add(new Ast.Expression.Binary("-", literals.get(i - 2), literals.get(i - 1)));
-                }
-
-                return bin.getLast();
-            }
-            return new Ast.Expression.Binary("-", literals.get(0), literals.get(1));
-        }
-
         return expr;
     }
 
@@ -268,47 +211,12 @@ public final class Parser {
      */
     public Ast.Expression parseMultiplicativeExpression() throws ParseException {
         Ast.Expression expr = parseSecondaryExpression();
-        if(peek("*"))
+        while(peek("*") || peek("/"))
         {
-            match("*");
-            List<Ast.Expression> literals = new ArrayList<Ast.Expression>();
-            literals.add(expr);
-            literals.add(parseSecondaryExpression());
-            if(peek("*")) {
-                while (peek("*")) {
-                    match("*");
-                    literals.add(parseSecondaryExpression());
-                }
-                List<Ast.Expression.Binary> bin = new ArrayList<Ast.Expression.Binary>();
-
-                for (int i = 2; i < literals.size(); i += 2) {
-                    bin.add(new Ast.Expression.Binary("*", literals.get(i - 2), literals.get(i - 1)));
-                }
-
-                return bin.getLast();
-            }
-            return new Ast.Expression.Binary("*", literals.get(0), literals.get(1));
-        }
-        else if(peek("/"))
-        {
-            match("/");
-            List<Ast.Expression> literals = new ArrayList<Ast.Expression>();
-            literals.add(expr);
-            literals.add(parseSecondaryExpression());
-            if(peek("/")) {
-                while (peek("/")) {
-                    match("/");
-                    literals.add(parseSecondaryExpression());
-                }
-                List<Ast.Expression.Binary> bin = new ArrayList<Ast.Expression.Binary>();
-
-                for (int i = 2; i < literals.size(); i += 2) {
-                    bin.add(new Ast.Expression.Binary("/", literals.get(i - 2), literals.get(i - 1)));
-                }
-
-                return bin.getLast();
-            }
-            return new Ast.Expression.Binary("/", literals.get(0), literals.get(1));
+            String operator = tokens.get(0).getLiteral();
+            match(operator);
+            Ast.Expression expr2 = parseMultiplicativeExpression();
+            expr = new Ast.Expression.Binary(operator, expr, expr2);
         }
 
         return expr;

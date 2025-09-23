@@ -72,6 +72,14 @@ public final class Parser {
                 return new Ast.Statement.Assignment(expr, expr2);
             }
         }
+        else if (peek("LET"))
+        {
+            match("LET");
+            if(peek(Token.Type.IDENTIFIER))
+            {
+
+            }
+        }
 
         return new Ast.Statement.Expression(expr);
     }

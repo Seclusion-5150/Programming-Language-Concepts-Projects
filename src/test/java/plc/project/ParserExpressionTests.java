@@ -536,9 +536,9 @@ final class ParserExpressionTests {
                         Arrays.asList(
                                 // a AND b OR c
                                 new Token(Token.Type.IDENTIFIER, "a", 0),
-                                new Token(Token.Type.IDENTIFIER, "AND", 2),
+                                new Token(Token.Type.OPERATOR, "AND", 2),
                                 new Token(Token.Type.IDENTIFIER, "b", 6),
-                                new Token(Token.Type.IDENTIFIER, "OR", 8),
+                                new Token(Token.Type.OPERATOR, "OR", 8),
                                 new Token(Token.Type.IDENTIFIER, "c", 11)
                         ),
                         new Ast.Expression.Binary("OR",

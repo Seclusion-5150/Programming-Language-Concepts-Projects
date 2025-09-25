@@ -73,9 +73,7 @@ public final class Parser {
                         match(";");
                         return new Ast.Field(name, constant, expr);
                     } else if (!peek(";")) {
-                        int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                                (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+                        int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
                         throw new ParseException("Expected Semicolon at: " + errorIndex, errorIndex);
                     }
 
@@ -86,16 +84,12 @@ public final class Parser {
 
                     return new Ast.Field(name, constant, Optional.empty());
                 } else if (!peek(";")) {
-                    int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                            (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+                    int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
                     throw new ParseException("Expected Semicolon at: " + errorIndex, errorIndex);
                 }
             }
         }
-        int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+        int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
         throw new ParseException("Invalid Field at: " + errorIndex, errorIndex);
     }
 
@@ -121,9 +115,7 @@ public final class Parser {
                                 parameters.add(tokens.get(0).getLiteral());
                                 match(Token.Type.IDENTIFIER);
                             } else if (!peek(Token.Type.IDENTIFIER)) {
-                                int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                                        (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+                                int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
                                 throw new ParseException("Trailing Comma Error at: " + errorIndex, errorIndex);
                             }
                         }
@@ -142,29 +134,21 @@ public final class Parser {
                                 match("END");
                                 return new Ast.Method(name, parameters, methodStatements);
                             } else if (!peek("END")) {
-                                int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                                        (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+                                int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
                                 throw new ParseException("Expected END Idenfitier at: " + errorIndex, errorIndex);
                             }
                         } else if (!peek("DO")) {
-                            int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                                    (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+                            int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
                             throw new ParseException("Expected DO Idenfitier at: " + errorIndex, errorIndex);
                         }
                     } else if (!peek(")")) {
-                        int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                                (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+                        int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
                         throw new ParseException("Expected Closing Parenthesis at: " + errorIndex, errorIndex);
                     }
                 }
             }
         }
-        int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+        int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
         throw new ParseException("Invalid Method at: " + errorIndex, errorIndex);
     }
 
@@ -196,9 +180,7 @@ public final class Parser {
                     return new Ast.Statement.Assignment(expr, expr2);
                 }
                 else if (!peek(";")) {
-                    int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                            (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+                    int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
                     throw new ParseException("Expected Semicolon at: " + errorIndex, errorIndex);
                 }
             }
@@ -207,15 +189,12 @@ public final class Parser {
                 return new Ast.Statement.Expression(expr);
             }
             else if (!peek(";")) {
-                int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                        (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+                int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
                 throw new ParseException("Expected Semicolon at: " + errorIndex, errorIndex);
             }
 
         }
-        int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
+        int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
 
         throw new ParseException("Invalid Parse Statement at: " + errorIndex, errorIndex);
     }
@@ -236,9 +215,7 @@ public final class Parser {
                     Optional<Ast.Expression> expr2 = Optional.of(parseExpression());
                     if (match(";")) return new Ast.Statement.Declaration(name, expr2);
                     else if (!peek(";")) {
-                        int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                                (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+                        int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
                         throw new ParseException("Expected Semicolon at: " + errorIndex, errorIndex);
                     }
 
@@ -246,18 +223,14 @@ public final class Parser {
 
                 if (peek(";")) return new Ast.Statement.Declaration(name, Optional.empty());
                 else if (!peek(";")) {
-                    int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                            (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+                    int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
                     throw new ParseException("Expected Semicolon at: " + errorIndex, errorIndex);
                 }
 
             }
         }
 
-        int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+        int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
         throw new ParseException("Invalid Declaration Statement at: " + errorIndex, errorIndex);
     }
 
@@ -290,16 +263,12 @@ public final class Parser {
                     match("END");
                     return new Ast.Statement.If(condition, thenStatements, elseStatements);
                 } else if (!peek("END")) {
-                    int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                            (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+                    int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
                     throw new ParseException("Expected END Identifier at: " + errorIndex, errorIndex);
                 }
             }
         }
-        int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+        int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
         throw new ParseException("Invalid If Statement at: " + errorIndex, errorIndex);
     }
 
@@ -345,38 +314,29 @@ public final class Parser {
 
                                 return new Ast.Statement.For(initialization, condition, increment, forStatements);
                             } else if (!peek("END")) {
-                                int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                                        (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+                                int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
                                 throw new ParseException("Expected END Identifier at: " + errorIndex, errorIndex);
                             }
                         } else if (!peek(")"))
                         {
-                            int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                                    (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
+                            int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
                             throw new ParseException("Expected Closing Parenthesis at: " + errorIndex, errorIndex);
                         }
 
                     } else if (!peek(";")) {
-                        int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                                (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+                        int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
                         throw new ParseException("Expected Semicolon at: " + errorIndex, errorIndex);
                     }
 
                 } else if (!peek(";")) {
-                    int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                            (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+                    int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
                     throw new ParseException("Expected Semicolon at: " + errorIndex, errorIndex);
                 }
 
             }
         }
 
-        int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+        int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
         throw new ParseException("Invalid For Statement at: " + errorIndex, errorIndex);
     }
 
@@ -400,15 +360,12 @@ public final class Parser {
                     return new Ast.Statement.While(condition, whileStatements);
                 } else if (!peek("END"))
                 {
-                    int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                            (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
+                    int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
                     throw new ParseException("Expected END Identifier at: " + errorIndex, errorIndex);
                 }
             } else if (!peek("DO")) {
 
-                int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                        (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+                int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
                 throw new ParseException("Expected DO Identifier at: " + errorIndex, errorIndex);
             }
         }
@@ -428,9 +385,7 @@ public final class Parser {
                 return new Ast.Statement.Return(expr);
             }
         }
-        int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+        int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
         throw new ParseException("Expected Semicolon at: " + errorIndex, errorIndex);
     }
 
@@ -454,9 +409,7 @@ public final class Parser {
             match(operator);
 
             if (!tokens.has(0)) {
-                int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                        (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+                int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
                 throw new ParseException("Missing operand after '" + operator + "'",
                         errorIndex);
             }
@@ -476,15 +429,13 @@ public final class Parser {
         Ast.Expression expr = parseAdditiveExpression();
         while(peek("<") || peek("<=") ||
                 peek(">") || peek(">=") ||
-        peek("!=") || peek("=="))
+                peek("!=") || peek("=="))
         {
             String operator = tokens.get(0).getLiteral();
             match(operator);
 
             if (!tokens.has(0)) {
-                int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                        (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+                int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
                 throw new ParseException("Missing operand after '" + operator + "'",
                         errorIndex);
             }
@@ -493,7 +444,7 @@ public final class Parser {
             expr = new Ast.Expression.Binary(operator, expr, expr2);
         }
 
-       return expr;
+        return expr;
     }
 
     /**
@@ -509,9 +460,7 @@ public final class Parser {
             match(operator);
 
             if (!tokens.has(0)) {
-                int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                        (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+                int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
                 throw new ParseException("Missing operand after '" + operator + "'",
                         errorIndex);
             }
@@ -534,9 +483,7 @@ public final class Parser {
             match(operator);
 
             if (!tokens.has(0)) {
-                int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                        (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+                int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
                 throw new ParseException("Missing operand after '" + operator + "'",
                         errorIndex);
             }
@@ -576,9 +523,7 @@ public final class Parser {
                         }
 
                         if (tokens.get(-1).getLiteral().equals(",")) {
-                            int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                                    (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+                            int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
                             throw new ParseException("Trailing Comma Error at: " + errorIndex, errorIndex);
                         }
                         if (peek(")")) {
@@ -601,9 +546,7 @@ public final class Parser {
                 return new Ast.Expression.Access(receiver, name2);
 
             }
-            int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                    (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+            int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
             throw new ParseException("Identifier Expected After '.' Operator at: " + errorIndex, errorIndex);
         }
 
@@ -669,9 +612,7 @@ public final class Parser {
 
             if (match(")")) return new Ast.Expression.Group(expr);
 
-            int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                    (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+            int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
             throw new ParseException("Expected Closing Parenthesis at: " + errorIndex, errorIndex);
 
         } else if (peek(Token.Type.IDENTIFIER)) {
@@ -691,9 +632,7 @@ public final class Parser {
 
                     }
                     if (tokens.get(-1).getLiteral().equals(",")) {
-                        int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                                (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+                        int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
                         throw new ParseException("Trailing Comma Error at: " + errorIndex, errorIndex);
                     }
 
@@ -701,9 +640,7 @@ public final class Parser {
                         match(")");
                         return new Ast.Expression.Function(Optional.empty(), name, arguments);
                     }
-                    int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                            (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
-
+                    int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
                     throw new ParseException("Expected Closing Parenthesis at: " + errorIndex, errorIndex);
                 }
                 else {
@@ -713,11 +650,10 @@ public final class Parser {
             }
             else return new Ast.Expression.Access(Optional.empty(), tokens.get(-1).getLiteral());
         }
-        int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
-                (tokens.tokens.isEmpty() ? 0 : tokens.tokens.get(tokens.tokens.size() - 1).getIndex());
+        int errorIndex = tokens.index != 0? tokens.get(-1).getIndex() : tokens.get(0).getIndex();
 
         throw new ParseException("Invalid Primary Expression at: " + errorIndex, errorIndex);
-}
+    }
 
 
 

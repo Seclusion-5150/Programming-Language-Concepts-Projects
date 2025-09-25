@@ -1246,7 +1246,9 @@ final class ParserTests {
         // Test unexpected closing parenthesis
         List<Token> tokens = Arrays.asList(
                 new Token(Token.Type.OPERATOR, "(", 0),
-                new Token(Token.Type.IDENTIFIER, "expr", 1)
+                new Token(Token.Type.IDENTIFIER, "expr", 1),
+                new Token(Token.Type.OPERATOR, "]", 2)
+
         );
         Parser parser = new Parser(tokens);
         try {
@@ -1347,7 +1349,7 @@ final class ParserTests {
         ParseException exception = Assertions.assertThrows(ParseException.class,
                 () -> new Parser(tokens).parseExpression());
 
-        Assertions.assertEquals(1, exception.getIndex());
+        Assertions.assertEquals(0, exception.getIndex());
     }
 
     @Test

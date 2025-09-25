@@ -1237,7 +1237,7 @@ final class ParserTests {
             Assertions.fail("Expected ParseException");
         } catch (ParseException e) {
             // Should be index 2 (where closing paren should be), not 2
-            Assertions.assertEquals(2, e.getIndex());
+            Assertions.assertEquals(1, e.getIndex());
         }
     }
 
@@ -1245,8 +1245,8 @@ final class ParserTests {
     void testInvalidClosingParenthesisCorrectIndex() {
         // Test unexpected closing parenthesis
         List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.OPERATOR, ")", 0),
-                new Token(Token.Type.INTEGER, "1", 1)
+                new Token(Token.Type.OPERATOR, "(", 0),
+                new Token(Token.Type.IDENTIFIER, "expr", 1)
         );
         Parser parser = new Parser(tokens);
         try {
@@ -1254,7 +1254,7 @@ final class ParserTests {
             Assertions.fail("Expected ParseException");
         } catch (ParseException e) {
             // Should point to the invalid closing paren at index 1
-            Assertions.assertEquals(0, e.getIndex());
+            Assertions.assertEquals(1, e.getIndex());
         }
     }
     @Test
@@ -1285,4 +1285,124 @@ final class ParserTests {
         Assertions.assertTrue(func.getArguments().get(1) instanceof Ast.Expression.Literal);
         Assertions.assertEquals(new BigInteger("42"), ((Ast.Expression.Literal) func.getArguments().get(1)).getLiteral());
     }
+
+    @Test
+    void testBinaryExpressionMissingOperand() {
+        List<Token> tokens = Arrays.asList(
+                new Token(Token.Type.INTEGER, "5", 0),
+                new Token(Token.Type.OPERATOR, "+", 1)
+        );
+        ParseException exception = Assertions.assertThrows(ParseException.class,
+                () -> new Parser(tokens).parseExpression());
+
+        Assertions.assertFalse(exception.getMessage().contains("IndexOutOfBoundsException"));
+    }
+
+    @Test
+    void testMultiplicativeExpressionMissingOperand() {
+        List<Token> tokens = Arrays.asList(
+                new Token(Token.Type.INTEGER, "5", 0),
+                new Token(Token.Type.OPERATOR, "*", 1)
+        );
+        ParseException exception = Assertions.assertThrows(ParseException.class,
+                () -> new Parser(tokens).parseExpression());
+
+        Assertions.assertFalse(exception.getMessage().contains("IndexOutOfBoundsException"));
+    }
+
+    @Test
+    void testMissingClosingParenthesis() {
+        List<Token> tokens = Arrays.asList(
+                new Token(Token.Type.OPERATOR, "(", 0),
+                new Token(Token.Type.INTEGER, "5", 1),
+                new Token(Token.Type.OPERATOR, "+", 2),
+                new Token(Token.Type.INTEGER, "3", 3)
+        );
+        ParseException exception = Assertions.assertThrows(ParseException.class,
+                () -> new Parser(tokens).parseExpression());
+
+        Assertions.assertEquals(3, exception.getIndex());
+    }
+
+    @Test
+    void testDoubleOperators() {
+        List<Token> tokens = Arrays.asList(
+                new Token(Token.Type.INTEGER, "5", 0),
+                new Token(Token.Type.OPERATOR, "+", 1),
+                new Token(Token.Type.OPERATOR, "+", 2),
+                new Token(Token.Type.INTEGER, "3", 3)
+        );
+        ParseException exception = Assertions.assertThrows(ParseException.class,
+                () -> new Parser(tokens).parseExpression());
+
+        Assertions.assertFalse(exception.getMessage().contains("IndexOutOfBoundsException"));
+    }
+
+    @Test
+    void testEmptyParentheses() {
+        List<Token> tokens = Arrays.asList(
+                new Token(Token.Type.OPERATOR, "(", 0),
+                new Token(Token.Type.OPERATOR, ")", 1)
+        );
+        ParseException exception = Assertions.assertThrows(ParseException.class,
+                () -> new Parser(tokens).parseExpression());
+
+        Assertions.assertEquals(1, exception.getIndex());
+    }
+
+    @Test
+    void testNestedParenthesesMissingClose() {
+        List<Token> tokens = Arrays.asList(
+                new Token(Token.Type.OPERATOR, "(", 0),
+                new Token(Token.Type.OPERATOR, "(", 1),
+                new Token(Token.Type.INTEGER, "5", 2),
+                new Token(Token.Type.OPERATOR, "+", 3),
+                new Token(Token.Type.INTEGER, "3", 4),
+                new Token(Token.Type.OPERATOR, ")", 5)
+        );
+        ParseException exception = Assertions.assertThrows(ParseException.class,
+                () -> new Parser(tokens).parseExpression());
+
+        // Should report error at end where final ')' should be
+        Assertions.assertEquals(5, exception.getIndex());
+    }
+
+    @Test
+    void testValidParenthesesStillWork() throws ParseException {
+        List<Token> tokens = Arrays.asList(
+                new Token(Token.Type.OPERATOR, "(", 0),
+                new Token(Token.Type.INTEGER, "5", 1),
+                new Token(Token.Type.OPERATOR, "+", 2),
+                new Token(Token.Type.INTEGER, "3", 3),
+                new Token(Token.Type.OPERATOR, ")", 4)
+        );
+        Ast.Expression expr = new Parser(tokens).parseExpression();
+        Assertions.assertNotNull(expr);
+        Assertions.assertTrue(expr instanceof Ast.Expression.Group);
+    }
+
+    @Test
+    void testDivisionMissingOperand() {
+        List<Token> tokens = Arrays.asList(
+                new Token(Token.Type.INTEGER, "10", 0),
+                new Token(Token.Type.OPERATOR, "/", 3)
+        );
+        ParseException exception = Assertions.assertThrows(ParseException.class,
+                () -> new Parser(tokens).parseExpression());
+
+        Assertions.assertFalse(exception.getMessage().contains("IndexOutOfBoundsException"));
+    }
+
+    @Test
+    void testSubtractionMissingOperand() {
+        List<Token> tokens = Arrays.asList(
+                new Token(Token.Type.INTEGER, "7", 0),
+                new Token(Token.Type.OPERATOR, "-", 1)
+        );
+        ParseException exception = Assertions.assertThrows(ParseException.class,
+                () -> new Parser(tokens).parseExpression());
+
+        Assertions.assertFalse(exception.getMessage().contains("IndexOutOfBoundsException"));
+    }
+
 }

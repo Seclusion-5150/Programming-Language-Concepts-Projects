@@ -432,7 +432,7 @@ public final class Parser {
      */
     public Ast.Expression parseLogicalExpression() throws ParseException {
         Ast.Expression expr = parseEqualityExpression();
-        while(peek("AND") || peek("OR") || peek("&&") || peek("||"))
+        while(peek("AND") || peek("OR"))
         {
             String operator = tokens.get(0).getLiteral();
             match(operator);
@@ -449,9 +449,11 @@ public final class Parser {
         }
         return expr;
     }
+
     /**
      * Parses the {@code equality-expression} rule.
      */
+
     public Ast.Expression parseEqualityExpression() throws ParseException {
         Ast.Expression expr = parseAdditiveExpression();
         while(peek("<") || peek("<=") ||

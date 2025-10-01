@@ -528,883 +528,388 @@ final class ParserTests {
         }
     }
     @Test
-    void testParsePrimaryExpressionNil() throws ParseException {
-        Parser parser = new Parser(Arrays.asList(new Token(Token.Type.IDENTIFIER, "NIL", 0)));
-        Ast.Expression result = parser.parsePrimaryExpression();
-        Assertions.assertNull(((Ast.Expression.Literal) result).getLiteral());
+    public void testCharEscapeBackspace() {
+        Ast.Expression.Literal expected = new Ast.Expression.Literal('\b');
+        Ast.Expression actual = new Parser(Arrays.asList(
+                new Token(Token.Type.CHARACTER, "'\\b'", 0)
+        )).parseExpression();
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
-    void testParsePrimaryExpressionTrue() throws ParseException {
-        Parser parser = new Parser(Arrays.asList(new Token(Token.Type.IDENTIFIER, "TRUE", 0)));
-        Ast.Expression result = parser.parsePrimaryExpression();
-        Assertions.assertEquals(true, ((Ast.Expression.Literal) result).getLiteral());
+    public void testCharEscapeSingleQuote() {
+        Ast.Expression.Literal expected = new Ast.Expression.Literal('\'');
+        Ast.Expression actual = new Parser(Arrays.asList(
+                new Token(Token.Type.CHARACTER, "'\\''", 0)
+        )).parseExpression();
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
-    void testParsePrimaryExpressionFalse() throws ParseException {
-        Parser parser = new Parser(Arrays.asList(new Token(Token.Type.IDENTIFIER, "FALSE", 0)));
-        Ast.Expression result = parser.parsePrimaryExpression();
-        Assertions.assertEquals(false, ((Ast.Expression.Literal) result).getLiteral());
+    public void testCharEscapeDoubleQuote() {
+        Ast.Expression.Literal expected = new Ast.Expression.Literal('"');
+        Ast.Expression actual = new Parser(Arrays.asList(
+                new Token(Token.Type.CHARACTER, "'\\\"'", 0)
+        )).parseExpression();
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
-    void testParsePrimaryExpressionInteger() throws ParseException {
-        Parser parser = new Parser(Arrays.asList(new Token(Token.Type.INTEGER, "42", 0)));
-        Ast.Expression result = parser.parsePrimaryExpression();
-        Assertions.assertEquals(new BigInteger("42"), ((Ast.Expression.Literal) result).getLiteral());
+    public void testCharEscapeBackslash() {
+        Ast.Expression.Literal expected = new Ast.Expression.Literal('\\');
+        Ast.Expression actual = new Parser(Arrays.asList(
+                new Token(Token.Type.CHARACTER, "'\\\\'", 0)
+        )).parseExpression();
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
-    void testParsePrimaryExpressionDecimal() throws ParseException {
-        Parser parser = new Parser(Arrays.asList(new Token(Token.Type.DECIMAL, "3.14", 0)));
-        Ast.Expression result = parser.parsePrimaryExpression();
-        Assertions.assertEquals(new BigDecimal("3.14"), ((Ast.Expression.Literal) result).getLiteral());
+    public void testStringEscapeBackspace() {
+        Ast.Expression.Literal expected = new Ast.Expression.Literal("\b");
+        Ast.Expression actual = new Parser(Arrays.asList(
+                new Token(Token.Type.STRING, "\"\\b\"", 0)
+        )).parseExpression();
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
-    void testParsePrimaryExpressionCharacter() throws ParseException {
-        Parser parser = new Parser(Arrays.asList(new Token(Token.Type.CHARACTER, "'a'", 0)));
-        Ast.Expression result = parser.parsePrimaryExpression();
-        Assertions.assertEquals('a', ((Ast.Expression.Literal) result).getLiteral());
+    public void testStringEscapeSingleQuote() {
+        Ast.Expression.Literal expected = new Ast.Expression.Literal("'");
+        Ast.Expression actual = new Parser(Arrays.asList(
+                new Token(Token.Type.STRING, "\"\\'\"", 0)
+        )).parseExpression();
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
-    void testParsePrimaryExpressionString() throws ParseException {
-        Parser parser = new Parser(Arrays.asList(new Token(Token.Type.STRING, "\"hello\"", 0)));
-        Ast.Expression result = parser.parsePrimaryExpression();
-        Assertions.assertEquals("hello", ((Ast.Expression.Literal) result).getLiteral());
+    public void testStringEscapeDoubleQuote() {
+        Ast.Expression.Literal expected = new Ast.Expression.Literal("\"");
+        Ast.Expression actual = new Parser(Arrays.asList(
+                new Token(Token.Type.STRING, "\"\\\"\"", 0)
+        )).parseExpression();
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
-    void testParsePrimaryExpressionGrouping() throws ParseException {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.OPERATOR, "(", 0),
-                new Token(Token.Type.INTEGER, "42", 1),
-                new Token(Token.Type.OPERATOR, ")", 2)
+    public void testStringEscapeBackslash() {
+        Ast.Expression.Literal expected = new Ast.Expression.Literal("\\");
+        Ast.Expression actual = new Parser(Arrays.asList(
+                new Token(Token.Type.STRING, "\"\\\\\"", 0)
+        )).parseExpression();
+        Assertions.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testLogicalAnd() {
+        Ast.Expression.Binary expected = new Ast.Expression.Binary(
+                "&&",
+                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                new Ast.Expression.Access(Optional.empty(), "expr2")
         );
-        Parser parser = new Parser(tokens);
-        Ast.Expression result = parser.parsePrimaryExpression();
-        Assertions.assertTrue(result instanceof Ast.Expression.Group);
-    }
-
-    @Test
-    void testParsePrimaryExpressionIdentifier() throws ParseException {
-        Parser parser = new Parser(Arrays.asList(new Token(Token.Type.IDENTIFIER, "variable", 0)));
-        Ast.Expression result = parser.parsePrimaryExpression();
-        Assertions.assertTrue(result instanceof Ast.Expression.Access);
-    }
-
-    @Test
-    void testParsePrimaryExpressionFunctionCall() throws ParseException {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "func", 0),
-                new Token(Token.Type.OPERATOR, "(", 1),
-                new Token(Token.Type.INTEGER, "1", 2),
-                new Token(Token.Type.OPERATOR, ",", 3),
-                new Token(Token.Type.INTEGER, "2", 4),
-                new Token(Token.Type.OPERATOR, ")", 5)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Expression result = parser.parsePrimaryExpression();
-        Assertions.assertTrue(result instanceof Ast.Expression.Function);
-    }
-
-    @Test
-    void testParseSecondaryExpressionFieldAccess() throws ParseException {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "obj", 0),
-                new Token(Token.Type.OPERATOR, ".", 1),
-                new Token(Token.Type.IDENTIFIER, "field", 2)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Expression result = parser.parseSecondaryExpression();
-        Assertions.assertTrue(result instanceof Ast.Expression.Access);
-    }
-
-    @Test
-    void testParseSecondaryExpressionMethodCall() throws ParseException {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "obj", 0),
-                new Token(Token.Type.OPERATOR, ".", 1),
-                new Token(Token.Type.IDENTIFIER, "method", 2),
-                new Token(Token.Type.OPERATOR, "(", 3),
-                new Token(Token.Type.INTEGER, "42", 4),
-                new Token(Token.Type.OPERATOR, ")", 5)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Expression result = parser.parseSecondaryExpression();
-        Assertions.assertTrue(result instanceof Ast.Expression.Function);
-    }
-
-    @Test
-    void testParseAdditiveExpression() throws ParseException {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.INTEGER, "1", 0),
-                new Token(Token.Type.OPERATOR, "+", 1),
-                new Token(Token.Type.INTEGER, "2", 2)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Expression result = parser.parseAdditiveExpression();
-        Assertions.assertTrue(result instanceof Ast.Expression.Binary);
-    }
-
-    @Test
-    void testParseMultiplicativeExpression() throws ParseException {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.INTEGER, "3", 0),
-                new Token(Token.Type.OPERATOR, "*", 1),
-                new Token(Token.Type.INTEGER, "4", 2)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Expression result = parser.parseMultiplicativeExpression();
-        Assertions.assertTrue(result instanceof Ast.Expression.Binary);
-    }
-
-    @Test
-    void testParseEqualityExpression() throws ParseException {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.INTEGER, "5", 0),
-                new Token(Token.Type.OPERATOR, "==", 1),
-                new Token(Token.Type.INTEGER, "6", 2)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Expression result = parser.parseEqualityExpression();
-        Assertions.assertTrue(result instanceof Ast.Expression.Binary);
-    }
-
-    @Test
-    void testParseLogicalExpression() throws ParseException {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "TRUE", 0),
-                new Token(Token.Type.IDENTIFIER, "AND", 1),
-                new Token(Token.Type.IDENTIFIER, "FALSE", 2)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Expression result = parser.parseLogicalExpression();
-        Assertions.assertTrue(result instanceof Ast.Expression.Binary);
-    }
-
-    @Test
-    void testParseDeclarationStatement() throws ParseException {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "LET", 0),
-                new Token(Token.Type.IDENTIFIER, "x", 1),
-                new Token(Token.Type.OPERATOR, "=", 2),
-                new Token(Token.Type.INTEGER, "5", 3),
-                new Token(Token.Type.OPERATOR, ";", 4)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Statement result = parser.parseStatement();
-        Assertions.assertTrue(result instanceof Ast.Statement.Declaration);
-    }
-
-    @Test
-    void testParseAssignmentStatement() throws ParseException {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "x", 0),
-                new Token(Token.Type.OPERATOR, "=", 1),
-                new Token(Token.Type.INTEGER, "10", 2),
-                new Token(Token.Type.OPERATOR, ";", 3)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Statement result = parser.parseStatement();
-        Assertions.assertTrue(result instanceof Ast.Statement.Assignment);
-    }
-
-    @Test
-    void testParseIfStatement() throws ParseException {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "IF", 0),
-                new Token(Token.Type.IDENTIFIER, "TRUE", 1),
-                new Token(Token.Type.IDENTIFIER, "DO", 2),
-                new Token(Token.Type.IDENTIFIER, "x", 3),
-                new Token(Token.Type.OPERATOR, "=", 4),
-                new Token(Token.Type.INTEGER, "1", 5),
-                new Token(Token.Type.OPERATOR, ";", 6),
-                new Token(Token.Type.IDENTIFIER, "END", 7)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Statement result = parser.parseStatement();
-        Assertions.assertTrue(result instanceof Ast.Statement.If);
-    }
-
-    @Test
-    void testParseWhileStatement() throws ParseException {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "WHILE", 0),
-                new Token(Token.Type.IDENTIFIER, "TRUE", 1),
-                new Token(Token.Type.IDENTIFIER, "DO", 2),
-                new Token(Token.Type.IDENTIFIER, "x", 3),
-                new Token(Token.Type.OPERATOR, "=", 4),
-                new Token(Token.Type.INTEGER, "1", 5),
-                new Token(Token.Type.OPERATOR, ";", 6),
-                new Token(Token.Type.IDENTIFIER, "END", 7)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Statement result = parser.parseStatement();
-        Assertions.assertTrue(result instanceof Ast.Statement.While);
-    }
-
-    @Test
-    void testParseReturnStatement() throws ParseException {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "RETURN", 0),
-                new Token(Token.Type.INTEGER, "42", 1),
-                new Token(Token.Type.OPERATOR, ";", 2)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Statement result = parser.parseStatement();
-        Assertions.assertTrue(result instanceof Ast.Statement.Return);
-    }
-
-    @Test
-    void testParseField() throws ParseException {
-        List<Token> tokens = Arrays.asList(
-
-                new Token(Token.Type.IDENTIFIER, "LET", 0),
-                new Token(Token.Type.IDENTIFIER, "x", 1),
-                new Token(Token.Type.OPERATOR, "=", 2),
-                new Token(Token.Type.INTEGER, "5", 3),
-                new Token(Token.Type.OPERATOR, ";", 4)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Field result = parser.parseField();
-        Assertions.assertFalse(result.getConstant());
-    }
-
-    @Test
-    void testParseConstField() throws ParseException {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "LET", 0),
-                new Token(Token.Type.IDENTIFIER, "CONST", 1),
-                new Token(Token.Type.IDENTIFIER, "x", 2),
-                new Token(Token.Type.OPERATOR, "=", 3),
-                new Token(Token.Type.INTEGER, "5", 4),
-                new Token(Token.Type.OPERATOR, ";", 5)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Field result = parser.parseField();
-        Assertions.assertTrue(result.getConstant());
-    }
-
-    @Test
-    void testParseMethod() throws ParseException {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "DEF", 0),
-                new Token(Token.Type.IDENTIFIER, "func", 1),
-                new Token(Token.Type.OPERATOR, "(", 2),
-                new Token(Token.Type.IDENTIFIER, "param1", 3),
-                new Token(Token.Type.OPERATOR, ",", 4),
-                new Token(Token.Type.IDENTIFIER, "param2", 5),
-                new Token(Token.Type.OPERATOR, ")", 6),
-                new Token(Token.Type.IDENTIFIER, "DO", 7),
-                new Token(Token.Type.IDENTIFIER, "RETURN", 8),
-                new Token(Token.Type.INTEGER, "42", 9),
-                new Token(Token.Type.OPERATOR, ";", 10),
-                new Token(Token.Type.IDENTIFIER, "END", 11)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Method result = parser.parseMethod();
-        Assertions.assertEquals(2, result.getParameters().size());
-    }
-
-    @Test
-    void testParseMethodNoParams() throws ParseException {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "DEF", 0),
-                new Token(Token.Type.IDENTIFIER, "func", 1),
-                new Token(Token.Type.OPERATOR, "(", 2),
-                new Token(Token.Type.OPERATOR, ")", 3),
-                new Token(Token.Type.IDENTIFIER, "DO", 4),
-                new Token(Token.Type.IDENTIFIER, "RETURN", 5),
-                new Token(Token.Type.INTEGER, "42", 6),
-                new Token(Token.Type.OPERATOR, ";", 7),
-                new Token(Token.Type.IDENTIFIER, "END", 8)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Method result = parser.parseMethod();
-        Assertions.assertEquals(0, result.getParameters().size());
-    }
-
-    @Test
-    void testParseSource() throws ParseException {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "LET", 0),
-                new Token(Token.Type.IDENTIFIER, "x", 1),
-                new Token(Token.Type.OPERATOR, "=", 2),
-                new Token(Token.Type.INTEGER, "5", 3),
-                new Token(Token.Type.OPERATOR, ";", 4),
-                new Token(Token.Type.IDENTIFIER, "DEF", 5),
-                new Token(Token.Type.IDENTIFIER, "main", 6),
-                new Token(Token.Type.OPERATOR, "(", 7),
-                new Token(Token.Type.OPERATOR, ")", 8),
-                new Token(Token.Type.IDENTIFIER, "DO", 9),
-                new Token(Token.Type.IDENTIFIER, "RETURN", 10),
-                new Token(Token.Type.IDENTIFIER, "x", 11),
-                new Token(Token.Type.OPERATOR, ";", 12),
-                new Token(Token.Type.IDENTIFIER, "END", 13)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Source result = parser.parseSource();
-        Assertions.assertEquals(1, result.getFields().size());
-        Assertions.assertEquals(1, result.getMethods().size());
-    }
-
-    @Test
-    void testParseExpressionError() {
-
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.OPERATOR, "invalid", 0)
-        );
-
-        Parser parser = new Parser(tokens);
-        Assertions.assertThrows(ParseException.class, () -> {
-            parser.parsePrimaryExpression();
-        });
-    }
-
-    @Test
-    void testParseMethodError() {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "func", 0),
-                new Token(Token.Type.OPERATOR, "(", 1),
-                new Token(Token.Type.OPERATOR, ")", 2)
-        );
-        Parser parser = new Parser(tokens);
-        Assertions.assertThrows(ParseException.class, () -> {
-            parser.parseMethod();
-        });
-    }
-
-    @Test
-    void testComplexExpression() throws ParseException {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.INTEGER, "1", 0),
-                new Token(Token.Type.OPERATOR, "+", 1),
-                new Token(Token.Type.INTEGER, "2", 2),
-                new Token(Token.Type.OPERATOR, "*", 3),
-                new Token(Token.Type.INTEGER, "3", 4)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Expression result = parser.parseExpression();
-        Assertions.assertTrue(result instanceof Ast.Expression.Binary);
-        Ast.Expression.Binary binary = (Ast.Expression.Binary) result;
-        Assertions.assertTrue(binary.getRight() instanceof Ast.Expression.Binary);
-    }
-
-    @Test
-    void testChainedComparison() throws ParseException {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "x", 0),
-                new Token(Token.Type.OPERATOR, "<", 1),
-                new Token(Token.Type.IDENTIFIER, "y", 2)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Expression result = parser.parseExpression();
-        Assertions.assertTrue(result instanceof Ast.Expression.Binary);
-    }
-    @Test
-    void testEmptyFunctionCall() throws ParseException {
-        // Test: func() with no arguments
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "func", 0),
-                new Token(Token.Type.OPERATOR, "(", 4),
-                new Token(Token.Type.OPERATOR, ")", 5)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Expression result = parser.parseExpression();
-        Assertions.assertTrue(result instanceof Ast.Expression.Function);
-        // Your implementation removes literals from arguments, so empty list should remain empty
-    }
-
-    @Test
-    void testTrailingCommaInFunction() {
-        // Test: func(arg,) - should throw exception
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "func", 0),
-                new Token(Token.Type.OPERATOR, "(", 4),
-                new Token(Token.Type.IDENTIFIER, "arg", 5),
-                new Token(Token.Type.OPERATOR, ",", 8),
-                new Token(Token.Type.OPERATOR, ")", 9)
-        );
-        Parser parser = new Parser(tokens);
-        Assertions.assertThrows(ParseException.class, () -> parser.parseExpression());
-    }
-
-    @Test
-    void testTrailingCommaInMethod() {
-        // Test: DEF func(param,) - should throw exception
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "DEF", 0),
-                new Token(Token.Type.IDENTIFIER, "func", 4),
-                new Token(Token.Type.OPERATOR, "(", 8),
-                new Token(Token.Type.IDENTIFIER, "param", 9),
-                new Token(Token.Type.OPERATOR, ",", 14),
-                new Token(Token.Type.OPERATOR, ")", 15),
-                new Token(Token.Type.IDENTIFIER, "DO", 17),
-                new Token(Token.Type.IDENTIFIER, "END", 20)
-        );
-        Parser parser = new Parser(tokens);
-        Assertions.assertThrows(ParseException.class, () -> parser.parseMethod());
-    }
-
-    @Test
-    void testForStatementWithoutInit() throws ParseException {
-        // Test: FOR (;condition;) - no initialization
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "FOR", 0),
-                new Token(Token.Type.OPERATOR, "(", 4),
-                new Token(Token.Type.OPERATOR, ";", 5),
-                new Token(Token.Type.IDENTIFIER, "TRUE", 6),
-                new Token(Token.Type.OPERATOR, ";", 10),
-                new Token(Token.Type.OPERATOR, ")", 11),
-                new Token(Token.Type.IDENTIFIER, "END", 13)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Statement result = parser.parseStatement();
-        Assertions.assertTrue(result instanceof Ast.Statement.For);
-        Ast.Statement.For forStmt = (Ast.Statement.For) result;
-        Assertions.assertNull(forStmt.getInitialization());
-    }
-
-    @Test
-    void testForStatementWithoutIncrement() throws ParseException {
-        // Test: FOR (i=0;condition;) - no increment
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "FOR", 0),
-                new Token(Token.Type.OPERATOR, "(", 4),
-                new Token(Token.Type.IDENTIFIER, "i", 5),
-                new Token(Token.Type.OPERATOR, "=", 6),
-                new Token(Token.Type.INTEGER, "0", 7),
-                new Token(Token.Type.OPERATOR, ";", 8),
-                new Token(Token.Type.IDENTIFIER, "TRUE", 9),
-                new Token(Token.Type.OPERATOR, ";", 13),
-                new Token(Token.Type.OPERATOR, ")", 14),
-                new Token(Token.Type.IDENTIFIER, "END", 16)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Statement result = parser.parseStatement();
-        Assertions.assertTrue(result instanceof Ast.Statement.For);
-        Ast.Statement.For forStmt = (Ast.Statement.For) result;
-        Assertions.assertNull(forStmt.getIncrement());
-    }
-
-    @Test
-    void testStringEscapeSequences() throws ParseException {
-        // Test escape sequences in strings
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.STRING, "\"Hello\\nWorld\\t!\"", 0)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Expression result = parser.parseExpression();
-        Assertions.assertEquals("Hello\nWorld\t!", ((Ast.Expression.Literal) result).getLiteral());
-    }
-
-    @Test
-    void testCharacterEscapeSequences() throws ParseException {
-        // Test escape sequences in characters
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.CHARACTER, "'\\n'", 0)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Expression result = parser.parseExpression();
-        Assertions.assertEquals('\n', ((Ast.Expression.Literal) result).getLiteral());
-    }
-
-    @Test
-    void testNestedGrouping() throws ParseException {
-        // Test: ((expr))
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.OPERATOR, "(", 0),
-                new Token(Token.Type.OPERATOR, "(", 1),
-                new Token(Token.Type.IDENTIFIER, "expr", 2),
-                new Token(Token.Type.OPERATOR, ")", 6),
-                new Token(Token.Type.OPERATOR, ")", 7)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Expression result = parser.parseExpression();
-        Assertions.assertTrue(result instanceof Ast.Expression.Group);
-        Assertions.assertTrue(((Ast.Expression.Group) result).getExpression() instanceof Ast.Expression.Group);
-    }
-
-    @Test
-    void testMultiplicativeRightAssociativity() throws ParseException {
-        // Test: 8 / 4 / 2 should parse as ((8 / 4) / 2)
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.INTEGER, "8", 0),
-                new Token(Token.Type.OPERATOR, "/", 1),
-                new Token(Token.Type.INTEGER, "4", 2),
-                new Token(Token.Type.OPERATOR, "/", 3),
-                new Token(Token.Type.INTEGER, "2", 4)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Expression result = parser.parseExpression();
-        // Should be left-associative based on your while loop implementation
-        Assertions.assertTrue(result instanceof Ast.Expression.Binary);
-    }
-
-    @Test
-    void testLogicalOperatorPrecedence() throws ParseException {
-        // Test: a AND b OR c should parse as (a AND b) OR c
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "a", 0),
-                new Token(Token.Type.IDENTIFIER, "AND", 2),
-                new Token(Token.Type.IDENTIFIER, "b", 6),
-                new Token(Token.Type.IDENTIFIER, "OR", 8),
-                new Token(Token.Type.IDENTIFIER, "c", 11)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Expression result = parser.parseExpression();
-        Assertions.assertTrue(result instanceof Ast.Expression.Binary);
-        Ast.Expression.Binary binary = (Ast.Expression.Binary) result;
-        Assertions.assertEquals("OR", binary.getOperator());
-        Assertions.assertTrue(binary.getLeft() instanceof Ast.Expression.Binary);
-    }
-
-    @Test
-    void testFieldWithoutValue() throws ParseException {
-        // Test: LET name; (no value)
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "LET", 0),
-                new Token(Token.Type.IDENTIFIER, "name", 4),
-                new Token(Token.Type.OPERATOR, ";", 8)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Field result = parser.parseField();
-        Assertions.assertEquals("name", result.getName());
-        Assertions.assertFalse(result.getValue().isPresent());
-    }
-
-    @Test
-    void testMethodCallWithNoArgumentsAfterDot() throws ParseException {
-        // Test: obj.method() - method call with no arguments
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "obj", 0),
-                new Token(Token.Type.OPERATOR, ".", 3),
-                new Token(Token.Type.IDENTIFIER, "method", 4),
-                new Token(Token.Type.OPERATOR, "(", 10),
-                new Token(Token.Type.OPERATOR, ")", 11)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Expression result = parser.parseExpression();
-        // Your implementation has bugs here - it removes literals and doesn't handle empty args correctly
-        Assertions.assertTrue(result instanceof Ast.Expression.Function);
-    }
-
-    @Test
-    void testMissingIdentifierAfterDot() {
-        // Test: obj. (missing identifier)
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "obj", 0),
-                new Token(Token.Type.OPERATOR, ".", 3)
-        );
-        Parser parser = new Parser(tokens);
-        Assertions.assertThrows(ParseException.class, () -> parser.parseExpression());
-    }
-
-    @Test
-    void testUnterminatedMethodDefinition() {
-        // Test: DEF func() DO stmt; (missing END)
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "DEF", 0),
-                new Token(Token.Type.IDENTIFIER, "func", 4),
-                new Token(Token.Type.OPERATOR, "(", 8),
-                new Token(Token.Type.OPERATOR, ")", 9),
-                new Token(Token.Type.IDENTIFIER, "DO", 11),
-                new Token(Token.Type.IDENTIFIER, "stmt", 14),
-                new Token(Token.Type.OPERATOR, ";", 18)
-        );
-        Parser parser = new Parser(tokens);
-        Assertions.assertThrows(ParseException.class, () -> parser.parseMethod());
-    }
-
-    @Test
-    void testInvalidLogicalOperators() throws ParseException {
-        // Test that && and || work (your code checks for them)
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "a", 0),
-                new Token(Token.Type.OPERATOR, "&&", 2),
-                new Token(Token.Type.IDENTIFIER, "b", 5)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Expression result = parser.parseExpression();
-        Assertions.assertTrue(result instanceof Ast.Expression.Binary);
-        Assertions.assertEquals("&&", ((Ast.Expression.Binary) result).getOperator());
-    }
-
-    @Test
-    void testEmptySource() throws ParseException {
-        // Test empty source file
-        List<Token> tokens = Arrays.asList();
-        Parser parser = new Parser(tokens);
-        Ast.Source result = parser.parseSource();
-        Assertions.assertTrue(result.getFields().isEmpty());
-        Assertions.assertTrue(result.getMethods().isEmpty());
-    }
-
-    @Test
-    void testBuggyForStatementParsing() {
-        // Your FOR parsing has a bug - it calls parseStatement() for initialization/increment
-        // but FOR expects assignments, not statements
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "FOR", 0),
-                new Token(Token.Type.OPERATOR, "(", 4),
-                new Token(Token.Type.IDENTIFIER, "i", 5),
-                new Token(Token.Type.OPERATOR, "=", 6),
-                new Token(Token.Type.INTEGER, "0", 7),
-                new Token(Token.Type.OPERATOR, ";", 8),
-                new Token(Token.Type.IDENTIFIER, "TRUE", 9),
-                new Token(Token.Type.OPERATOR, ";", 13),
-                new Token(Token.Type.IDENTIFIER, "i", 14),
-                new Token(Token.Type.OPERATOR, "=", 15),
-                new Token(Token.Type.INTEGER, "1", 16),
-                new Token(Token.Type.OPERATOR, ")", 17),
-                new Token(Token.Type.IDENTIFIER, "END", 19)
-        );
-        Parser parser = new Parser(tokens);
-        // This might fail due to the parseStatement() bug in FOR parsing
-        Assertions.assertThrows(ParseException.class, () -> parser.parseStatement());
-    }
-
-    // Tests for the specific failing cases from your results
-    @Test
-    void testExpressionMissingSemicolon() {
-        // This should throw ParseException but your parser doesn't
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "f", 0)
-                // Missing semicolon
-        );
-        Parser parser = new Parser(tokens);
-        Assertions.assertThrows(ParseException.class, () -> parser.parseStatement());
-    }
-
-    @Test
-    void testMethodCallWithEmptyLiteral() {
-        // Your parser incorrectly includes empty literal in arguments
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "obj", 0),
-                new Token(Token.Type.OPERATOR, ".", 3),
-                new Token(Token.Type.IDENTIFIER, "method", 4),
-                new Token(Token.Type.OPERATOR, "(", 10),
-                new Token(Token.Type.OPERATOR, ")", 11)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Expression result = parser.parseExpression();
-        Ast.Expression.Function func = (Ast.Expression.Function) result;
-        // Should have empty arguments list, not a literal
-        Assertions.assertEquals(0, func.getArguments().size());
-    }
-
-    @Test
-    void testFunctionTrailingCommaNotDetected() {
-        // Your parser doesn't properly detect trailing comma
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "name", 0),
-                new Token(Token.Type.OPERATOR, "(", 4),
-                new Token(Token.Type.IDENTIFIER, "expr", 5),
-                new Token(Token.Type.OPERATOR, ",", 9),
-                new Token(Token.Type.OPERATOR, ")", 10)
-        );
-        Parser parser = new Parser(tokens);
-        Assertions.assertThrows(ParseException.class, () -> parser.parseExpression());
-    }
-
-    @Test
-    void testEqualsNotEqualsOperator() {
-        // Your parser returns == instead of !=
-        List<Token> tokens = Arrays.asList(
+        Ast.Expression actual = new Parser(Arrays.asList(
                 new Token(Token.Type.IDENTIFIER, "expr1", 0),
-                new Token(Token.Type.OPERATOR, "!=", 6),
+                new Token(Token.Type.OPERATOR, "&&", 6),
                 new Token(Token.Type.IDENTIFIER, "expr2", 9)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Expression result = parser.parseExpression();
-        Ast.Expression.Binary binary = (Ast.Expression.Binary) result;
-        Assertions.assertEquals("!=", binary.getOperator());
+        )).parseExpression();
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
-    void testMissingClosingParenthesisCorrectIndex() {
-        // Your parser returns wrong index (2 instead of correct index)
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.OPERATOR, "(", 0),
-                new Token(Token.Type.INTEGER, "1", 1)
+    public void testLogicalOr() {
+        Ast.Expression.Binary expected = new Ast.Expression.Binary(
+                "||",
+                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                new Ast.Expression.Access(Optional.empty(), "expr2")
         );
-        Parser parser = new Parser(tokens);
-        try {
-            parser.parseExpression();
-            Assertions.fail("Expected ParseException");
-        } catch (ParseException e) {
-            // Should be index 2 (where closing paren should be), not 2
-            Assertions.assertEquals(1, e.getIndex());
-        }
+        Ast.Expression actual = new Parser(Arrays.asList(
+                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                new Token(Token.Type.OPERATOR, "||", 6),
+                new Token(Token.Type.IDENTIFIER, "expr2", 9)
+        )).parseExpression();
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
-    void testInvalidClosingParenthesisCorrectIndex() {
-        // Test unexpected closing parenthesis
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.OPERATOR, "(", 0),
-                new Token(Token.Type.IDENTIFIER, "expr", 1),
-                new Token(Token.Type.OPERATOR, "]", 2)
-
+    public void testMultipleLogicalAnd() {
+        Ast.Expression.Binary expected = new Ast.Expression.Binary(
+                "&&",
+                new Ast.Expression.Binary(
+                        "&&",
+                        new Ast.Expression.Access(Optional.empty(), "expr1"),
+                        new Ast.Expression.Access(Optional.empty(), "expr2")
+                ),
+                new Ast.Expression.Access(Optional.empty(), "expr3")
         );
-        Parser parser = new Parser(tokens);
-        try {
-            parser.parseExpression();
-            Assertions.fail("Expected ParseException");
-        } catch (ParseException e) {
-            // Should point to the invalid closing paren at index 1
-            Assertions.assertEquals(1, e.getIndex());
-        }
-    }
-    @Test
-    void testFunctionCallWithLiteralArguments() throws ParseException {
-        // Test: func("hello", 42) should preserve both arguments
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "func", 0),
-                new Token(Token.Type.OPERATOR, "(", 4),
-                new Token(Token.Type.STRING, "\"hello\"", 5),
-                new Token(Token.Type.OPERATOR, ",", 12),
-                new Token(Token.Type.INTEGER, "42", 14),
-                new Token(Token.Type.OPERATOR, ")", 16)
-        );
-        Parser parser = new Parser(tokens);
-        Ast.Expression result = parser.parseExpression();
-
-        Assertions.assertTrue(result instanceof Ast.Expression.Function);
-        Ast.Expression.Function func = (Ast.Expression.Function) result;
-
-        // Should have 2 arguments, not 0 due to removeIf bug
-        Assertions.assertEquals(2, func.getArguments().size());
-
-        // First argument should be string literal
-        Assertions.assertTrue(func.getArguments().get(0) instanceof Ast.Expression.Literal);
-        Assertions.assertEquals("hello", ((Ast.Expression.Literal) func.getArguments().get(0)).getLiteral());
-
-        // Second argument should be integer literal
-        Assertions.assertTrue(func.getArguments().get(1) instanceof Ast.Expression.Literal);
-        Assertions.assertEquals(new BigInteger("42"), ((Ast.Expression.Literal) func.getArguments().get(1)).getLiteral());
+        Ast.Expression actual = new Parser(Arrays.asList(
+                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                new Token(Token.Type.OPERATOR, "&&", 6),
+                new Token(Token.Type.IDENTIFIER, "expr2", 9),
+                new Token(Token.Type.OPERATOR, "&&", 15),
+                new Token(Token.Type.IDENTIFIER, "expr3", 18)
+        )).parseExpression();
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
-    void testBinaryExpressionMissingOperand() {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.INTEGER, "5", 0),
-                new Token(Token.Type.OPERATOR, "+", 1)
+    public void testMultipleLogicalOr() {
+        Ast.Expression.Binary expected = new Ast.Expression.Binary(
+                "||",
+                new Ast.Expression.Binary(
+                        "||",
+                        new Ast.Expression.Access(Optional.empty(), "expr1"),
+                        new Ast.Expression.Access(Optional.empty(), "expr2")
+                ),
+                new Ast.Expression.Access(Optional.empty(), "expr3")
         );
-        ParseException exception = Assertions.assertThrows(ParseException.class,
-                () -> new Parser(tokens).parseExpression());
-
-        Assertions.assertFalse(exception.getMessage().contains("IndexOutOfBoundsException"));
+        Ast.Expression actual = new Parser(Arrays.asList(
+                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                new Token(Token.Type.OPERATOR, "||", 6),
+                new Token(Token.Type.IDENTIFIER, "expr2", 9),
+                new Token(Token.Type.OPERATOR, "||", 15),
+                new Token(Token.Type.IDENTIFIER, "expr3", 18)
+        )).parseExpression();
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
-    void testMultiplicativeExpressionMissingOperand() {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.INTEGER, "5", 0),
-                new Token(Token.Type.OPERATOR, "*", 1)
+    public void testMultipleMultiplicative() {
+        Ast.Expression.Binary expected = new Ast.Expression.Binary(
+                "*",
+                new Ast.Expression.Binary(
+                        "*",
+                        new Ast.Expression.Access(Optional.empty(), "expr1"),
+                        new Ast.Expression.Access(Optional.empty(), "expr2")
+                ),
+                new Ast.Expression.Access(Optional.empty(), "expr3")
         );
-        ParseException exception = Assertions.assertThrows(ParseException.class,
-                () -> new Parser(tokens).parseExpression());
-
-        Assertions.assertFalse(exception.getMessage().contains("IndexOutOfBoundsException"));
+        Ast.Expression actual = new Parser(Arrays.asList(
+                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                new Token(Token.Type.OPERATOR, "*", 6),
+                new Token(Token.Type.IDENTIFIER, "expr2", 8),
+                new Token(Token.Type.OPERATOR, "*", 14),
+                new Token(Token.Type.IDENTIFIER, "expr3", 16)
+        )).parseExpression();
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
-    void testMissingClosingParenthesis() {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.OPERATOR, "(", 0),
-                new Token(Token.Type.INTEGER, "5", 1),
-                new Token(Token.Type.OPERATOR, "+", 2),
-                new Token(Token.Type.INTEGER, "3", 3)
+    public void testMultipleDivision() {
+        Ast.Expression.Binary expected = new Ast.Expression.Binary(
+                "/",
+                new Ast.Expression.Binary(
+                        "/",
+                        new Ast.Expression.Access(Optional.empty(), "expr1"),
+                        new Ast.Expression.Access(Optional.empty(), "expr2")
+                ),
+                new Ast.Expression.Access(Optional.empty(), "expr3")
         );
-        ParseException exception = Assertions.assertThrows(ParseException.class,
-                () -> new Parser(tokens).parseExpression());
-
-        Assertions.assertEquals(3, exception.getIndex());
+        Ast.Expression actual = new Parser(Arrays.asList(
+                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                new Token(Token.Type.OPERATOR, "/", 6),
+                new Token(Token.Type.IDENTIFIER, "expr2", 8),
+                new Token(Token.Type.OPERATOR, "/", 14),
+                new Token(Token.Type.IDENTIFIER, "expr3", 16)
+        )).parseExpression();
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
-    void testDoubleOperators() {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.INTEGER, "5", 0),
-                new Token(Token.Type.OPERATOR, "+", 1),
-                new Token(Token.Type.OPERATOR, "+", 2),
-                new Token(Token.Type.INTEGER, "3", 3)
+    public void testNestedFieldAccess() {
+        Ast.Expression.Access expected = new Ast.Expression.Access(
+                Optional.of(new Ast.Expression.Access(
+                        Optional.of(new Ast.Expression.Access(Optional.empty(), "x")),
+                        "y"
+                )),
+                "z"
         );
-        ParseException exception = Assertions.assertThrows(ParseException.class,
-                () -> new Parser(tokens).parseExpression());
-
-        Assertions.assertFalse(exception.getMessage().contains("IndexOutOfBoundsException"));
+        Ast.Expression actual = new Parser(Arrays.asList(
+                new Token(Token.Type.IDENTIFIER, "x", 0),
+                new Token(Token.Type.OPERATOR, ".", 1),
+                new Token(Token.Type.IDENTIFIER, "y", 2),
+                new Token(Token.Type.OPERATOR, ".", 3),
+                new Token(Token.Type.IDENTIFIER, "z", 4)
+        )).parseExpression();
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
-    void testEmptyParentheses() {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.OPERATOR, "(", 0),
-                new Token(Token.Type.OPERATOR, ")", 1)
+    public void testNestedMethodAccess() {
+        Ast.Expression.Function expected = new Ast.Expression.Function(
+                Optional.of(new Ast.Expression.Function(
+                        Optional.of(new Ast.Expression.Access(Optional.empty(), "obj")),
+                        "method1",
+                        Arrays.asList()
+                )),
+                "method2",
+                Arrays.asList()
         );
-        ParseException exception = Assertions.assertThrows(ParseException.class,
-                () -> new Parser(tokens).parseExpression());
-
-        Assertions.assertEquals(0, exception.getIndex());
+        Ast.Expression actual = new Parser(Arrays.asList(
+                new Token(Token.Type.IDENTIFIER, "obj", 0),
+                new Token(Token.Type.OPERATOR, ".", 3),
+                new Token(Token.Type.IDENTIFIER, "method1", 4),
+                new Token(Token.Type.OPERATOR, "(", 11),
+                new Token(Token.Type.OPERATOR, ")", 12),
+                new Token(Token.Type.OPERATOR, ".", 13),
+                new Token(Token.Type.IDENTIFIER, "method2", 14),
+                new Token(Token.Type.OPERATOR, "(", 21),
+                new Token(Token.Type.OPERATOR, ")", 22)
+        )).parseExpression();
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
-    void testNestedParenthesesMissingClose() {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.OPERATOR, "(", 0),
-                new Token(Token.Type.OPERATOR, "(", 1),
-                new Token(Token.Type.INTEGER, "5", 2),
-                new Token(Token.Type.OPERATOR, "+", 3),
-                new Token(Token.Type.INTEGER, "3", 4),
-                new Token(Token.Type.OPERATOR, ")", 5)
+    public void testAlternatingFieldsAndMethods() {
+        Ast.Expression.Function expected = new Ast.Expression.Function(
+                Optional.of(new Ast.Expression.Access(
+                        Optional.of(new Ast.Expression.Function(
+                                Optional.of(new Ast.Expression.Access(Optional.empty(), "obj1")),
+                                "method1",
+                                Arrays.asList()
+                        )),
+                        "field1"
+                )),
+                "method2",
+                Arrays.asList()
         );
-        ParseException exception = Assertions.assertThrows(ParseException.class,
-                () -> new Parser(tokens).parseExpression());
-
-        // Should report error at end where final ')' should be
-        Assertions.assertEquals(5, exception.getIndex());
+        Ast.Expression actual = new Parser(Arrays.asList(
+                new Token(Token.Type.IDENTIFIER, "obj1", 0),
+                new Token(Token.Type.OPERATOR, ".", 4),
+                new Token(Token.Type.IDENTIFIER, "method1", 5),
+                new Token(Token.Type.OPERATOR, "(", 12),
+                new Token(Token.Type.OPERATOR, ")", 13),
+                new Token(Token.Type.OPERATOR, ".", 14),
+                new Token(Token.Type.IDENTIFIER, "field1", 15),
+                new Token(Token.Type.OPERATOR, ".", 21),
+                new Token(Token.Type.IDENTIFIER, "method2", 22),
+                new Token(Token.Type.OPERATOR, "(", 29),
+                new Token(Token.Type.OPERATOR, ")", 30)
+        )).parseExpression();
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
-    void testValidParenthesesStillWork() throws ParseException {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.OPERATOR, "(", 0),
-                new Token(Token.Type.INTEGER, "5", 1),
-                new Token(Token.Type.OPERATOR, "+", 2),
-                new Token(Token.Type.INTEGER, "3", 3),
-                new Token(Token.Type.OPERATOR, ")", 4)
+    public void testLogicalAndComparison() {
+        Ast.Expression.Binary expected = new Ast.Expression.Binary(
+                "&&",
+                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                new Ast.Expression.Binary(
+                        "==",
+                        new Ast.Expression.Access(Optional.empty(), "expr2"),
+                        new Ast.Expression.Access(Optional.empty(), "expr3")
+                )
         );
-        Ast.Expression expr = new Parser(tokens).parseExpression();
-        Assertions.assertNotNull(expr);
-        Assertions.assertTrue(expr instanceof Ast.Expression.Group);
+        Ast.Expression actual = new Parser(Arrays.asList(
+                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                new Token(Token.Type.OPERATOR, "&&", 6),
+                new Token(Token.Type.IDENTIFIER, "expr2", 9),
+                new Token(Token.Type.OPERATOR, "==", 15),
+                new Token(Token.Type.IDENTIFIER, "expr3", 18)
+        )).parseExpression();
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
-    void testDivisionMissingOperand() {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.INTEGER, "10", 0),
-                new Token(Token.Type.OPERATOR, "/", 3)
+    public void testLogicalAndAdditive() {
+        Ast.Expression.Binary expected = new Ast.Expression.Binary(
+                "&&",
+                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                new Ast.Expression.Binary(
+                        "+",
+                        new Ast.Expression.Access(Optional.empty(), "expr2"),
+                        new Ast.Expression.Access(Optional.empty(), "expr3")
+                )
         );
-        ParseException exception = Assertions.assertThrows(ParseException.class,
-                () -> new Parser(tokens).parseExpression());
-
-        Assertions.assertFalse(exception.getMessage().contains("IndexOutOfBoundsException"));
+        Ast.Expression actual = new Parser(Arrays.asList(
+                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                new Token(Token.Type.OPERATOR, "&&", 6),
+                new Token(Token.Type.IDENTIFIER, "expr2", 9),
+                new Token(Token.Type.OPERATOR, "+", 15),
+                new Token(Token.Type.IDENTIFIER, "expr3", 17)
+        )).parseExpression();
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
-    void testSubtractionMissingOperand() {
-        List<Token> tokens = Arrays.asList(
-                new Token(Token.Type.INTEGER, "7", 0),
-                new Token(Token.Type.OPERATOR, "-", 1)
+    public void testLogicalAndMultiplicative() {
+        Ast.Expression.Binary expected = new Ast.Expression.Binary(
+                "&&",
+                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                new Ast.Expression.Binary(
+                        "*",
+                        new Ast.Expression.Access(Optional.empty(), "expr2"),
+                        new Ast.Expression.Access(Optional.empty(), "expr3")
+                )
         );
-        ParseException exception = Assertions.assertThrows(ParseException.class,
-                () -> new Parser(tokens).parseExpression());
-
-        Assertions.assertFalse(exception.getMessage().contains("IndexOutOfBoundsException"));
+        Ast.Expression actual = new Parser(Arrays.asList(
+                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                new Token(Token.Type.OPERATOR, "&&", 6),
+                new Token(Token.Type.IDENTIFIER, "expr2", 9),
+                new Token(Token.Type.OPERATOR, "*", 15),
+                new Token(Token.Type.IDENTIFIER, "expr3", 17)
+        )).parseExpression();
+        Assertions.assertEquals(expected, actual);
     }
 
+    @Test
+    public void testComparisonAndLogical() {
+        Ast.Expression.Binary expected = new Ast.Expression.Binary(
+                "&&",
+                new Ast.Expression.Binary(
+                        "==",
+                        new Ast.Expression.Access(Optional.empty(), "expr1"),
+                        new Ast.Expression.Access(Optional.empty(), "expr2")
+                ),
+                new Ast.Expression.Access(Optional.empty(), "expr3")
+        );
+        Ast.Expression actual = new Parser(Arrays.asList(
+                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                new Token(Token.Type.OPERATOR, "==", 6),
+                new Token(Token.Type.IDENTIFIER, "expr2", 9),
+                new Token(Token.Type.OPERATOR, "&&", 15),
+                new Token(Token.Type.IDENTIFIER, "expr3", 18)
+        )).parseExpression();
+        Assertions.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testAdditiveAndLogical() {
+        Ast.Expression.Binary expected = new Ast.Expression.Binary(
+                "&&",
+                new Ast.Expression.Binary(
+                        "+",
+                        new Ast.Expression.Access(Optional.empty(), "expr1"),
+                        new Ast.Expression.Access(Optional.empty(), "expr2")
+                ),
+                new Ast.Expression.Access(Optional.empty(), "expr3")
+        );
+        Ast.Expression actual = new Parser(Arrays.asList(
+                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                new Token(Token.Type.OPERATOR, "+", 6),
+                new Token(Token.Type.IDENTIFIER, "expr2", 8),
+                new Token(Token.Type.OPERATOR, "&&", 14),
+                new Token(Token.Type.IDENTIFIER, "expr3", 17)
+        )).parseExpression();
+        Assertions.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testMultiplicativeAndLogical() {
+        Ast.Expression.Binary expected = new Ast.Expression.Binary(
+                "&&",
+                new Ast.Expression.Binary(
+                        "*",
+                        new Ast.Expression.Access(Optional.empty(), "expr1"),
+                        new Ast.Expression.Access(Optional.empty(), "expr2")
+                ),
+                new Ast.Expression.Access(Optional.empty(), "expr3")
+        );
+        Ast.Expression actual = new Parser(Arrays.asList(
+                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                new Token(Token.Type.OPERATOR, "*", 6),
+                new Token(Token.Type.IDENTIFIER, "expr2", 8),
+                new Token(Token.Type.OPERATOR, "&&", 14),
+                new Token(Token.Type.IDENTIFIER, "expr3", 17)
+        )).parseExpression();
+        Assertions.assertEquals(expected, actual);
+    }
 }

@@ -167,7 +167,9 @@ public final class Parser {
         else if(peek("RETURN")) return parseReturnStatement();
         else
         {
+
             Ast.Expression expr = parseExpression();
+
             if(peek("="))
             {
                 match("=");
@@ -189,6 +191,7 @@ public final class Parser {
                 return new Ast.Statement.Expression(expr);
             }
             else if (!peek(";")) {
+
                 int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
                         (tokens.get(-1).getIndex() +
                                 tokens.get(-1).getLiteral().length());
@@ -295,38 +298,47 @@ public final class Parser {
         if(match("FOR")) {
             if (peek("(")) {
                 match("(");
-                Ast.Statement initialization = null;
+                Ast.Expression initialization = null;
+                Ast.Expression recieverInitialization = null;
                 if (peek(Token.Type.IDENTIFIER)) {
-                    match(Token.Type.IDENTIFIER);
+                    recieverInitialization = parseExpression();
+
                     if (peek("=")) {
                         match("=");
-                        initialization = parseStatement();
+                        initialization = parseExpression();
                     }
                 }
                 if (peek(";") || initialization != null) {
                     match(";"); // Will only match if it exists
                     Ast.Expression condition = parseExpression();
+
                     if (peek(";")) {
-                        Ast.Statement increment = null;
+                        Ast.Expression increment = null;
+                        Ast.Expression receiverIncrement = null;
                         match(";");
                         if (peek(Token.Type.IDENTIFIER)) {
-                            match(Token.Type.IDENTIFIER);
+                            receiverIncrement = parseExpression();
                             if (peek("=")) {
                                 match("=");
-                                increment = parseStatement();
+
+                                increment = parseExpression();
                             }
+
                         }
                         if (peek(")")) {
+
                             match(")");
                             List<Ast.Statement> forStatements = new
                                     ArrayList<Ast.Statement>();
+
                             while (!peek("END")) {
                                 forStatements.add(parseStatement());
                             }
+
                             if (peek("END")) {
                                 match("END");
-                                return new Ast.Statement.For(initialization,
-                                        condition, increment, forStatements);
+                                return new Ast.Statement.For(new Ast.Statement.Assignment(recieverInitialization, initialization),
+                                        condition, new Ast.Statement.Assignment(receiverIncrement, increment), forStatements);
                             } else if (!peek("END")) {
                                 int errorIndex = tokens.has(0) ?
                                         tokens.get(0).getIndex() :
@@ -334,7 +346,8 @@ public final class Parser {
                                                 tokens.get(-1).getLiteral().length());
                                 throw new ParseException("Expected END Identifier at: " + errorIndex, errorIndex);
                             }
-                        } else if (!peek(")"))
+                        }
+                        else if (!peek(")"))
                         {
                             int errorIndex = tokens.has(0) ?
                                     tokens.get(0).getIndex() :
@@ -343,6 +356,7 @@ public final class Parser {
                             throw new ParseException("Expected Closing Parenthesis at: " + errorIndex, errorIndex);
                         }
                     } else if (!peek(";")) {
+                        System.out.println("Is this it");
                         int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
                                 (tokens.get(-1).getIndex() +
                                         tokens.get(-1).getLiteral().length());
@@ -568,6 +582,14 @@ public final class Parser {
                     }
                 }
 
+            }
+            else {
+                int errorIndex = tokens.has(0) ? tokens.get(0).getIndex() :
+                        (tokens.get(-1).getIndex() +
+                                tokens.get(-1).getLiteral().length());
+
+                throw new ParseException("Expected Identifier after the '.' at: "
+                        + errorIndex, errorIndex);
             }
         }
 

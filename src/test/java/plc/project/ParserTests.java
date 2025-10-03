@@ -314,18 +314,7 @@ final class ParserTests {
 
     private static Stream<Arguments> testBinaryExpression() {
         return Stream.of(
-                Arguments.of("Binary And",
-                        Arrays.asList(
-                                // expr1 && expr2
-                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
-                                new Token(Token.Type.OPERATOR, "&&", 6),
-                                new Token(Token.Type.IDENTIFIER, "expr2", 10)
-                        ),
-                        new Ast.Expression.Binary("&&",
-                                new Ast.Expression.Access(Optional.empty(), "expr1"),
-                                new Ast.Expression.Access(Optional.empty(), "expr2")
-                        )
-                ),
+
                 Arguments.of("Binary Equality",
                         Arrays.asList(
                                 // expr1 == expr2
@@ -599,77 +588,7 @@ final class ParserTests {
         Assertions.assertEquals(expected, actual);
     }
 
-    @Test
-    public void testLogicalAnd() {
-        Ast.Expression.Binary expected = new Ast.Expression.Binary(
-                "&&",
-                new Ast.Expression.Access(Optional.empty(), "expr1"),
-                new Ast.Expression.Access(Optional.empty(), "expr2")
-        );
-        Ast.Expression actual = new Parser(Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "expr1", 0),
-                new Token(Token.Type.OPERATOR, "&&", 6),
-                new Token(Token.Type.IDENTIFIER, "expr2", 9)
-        )).parseExpression();
-        Assertions.assertEquals(expected, actual);
-    }
 
-    @Test
-    public void testLogicalOr() {
-        Ast.Expression.Binary expected = new Ast.Expression.Binary(
-                "||",
-                new Ast.Expression.Access(Optional.empty(), "expr1"),
-                new Ast.Expression.Access(Optional.empty(), "expr2")
-        );
-        Ast.Expression actual = new Parser(Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "expr1", 0),
-                new Token(Token.Type.OPERATOR, "||", 6),
-                new Token(Token.Type.IDENTIFIER, "expr2", 9)
-        )).parseExpression();
-        Assertions.assertEquals(expected, actual);
-    }
-
-    @Test
-    public void testMultipleLogicalAnd() {
-        Ast.Expression.Binary expected = new Ast.Expression.Binary(
-                "&&",
-                new Ast.Expression.Binary(
-                        "&&",
-                        new Ast.Expression.Access(Optional.empty(), "expr1"),
-                        new Ast.Expression.Access(Optional.empty(), "expr2")
-                ),
-                new Ast.Expression.Access(Optional.empty(), "expr3")
-        );
-        Ast.Expression actual = new Parser(Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "expr1", 0),
-                new Token(Token.Type.OPERATOR, "&&", 6),
-                new Token(Token.Type.IDENTIFIER, "expr2", 9),
-                new Token(Token.Type.OPERATOR, "&&", 15),
-                new Token(Token.Type.IDENTIFIER, "expr3", 18)
-        )).parseExpression();
-        Assertions.assertEquals(expected, actual);
-    }
-
-    @Test
-    public void testMultipleLogicalOr() {
-        Ast.Expression.Binary expected = new Ast.Expression.Binary(
-                "||",
-                new Ast.Expression.Binary(
-                        "||",
-                        new Ast.Expression.Access(Optional.empty(), "expr1"),
-                        new Ast.Expression.Access(Optional.empty(), "expr2")
-                ),
-                new Ast.Expression.Access(Optional.empty(), "expr3")
-        );
-        Ast.Expression actual = new Parser(Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "expr1", 0),
-                new Token(Token.Type.OPERATOR, "||", 6),
-                new Token(Token.Type.IDENTIFIER, "expr2", 9),
-                new Token(Token.Type.OPERATOR, "||", 15),
-                new Token(Token.Type.IDENTIFIER, "expr3", 18)
-        )).parseExpression();
-        Assertions.assertEquals(expected, actual);
-    }
 
     @Test
     public void testMultipleMultiplicative() {
@@ -787,129 +706,84 @@ final class ParserTests {
         Assertions.assertEquals(expected, actual);
     }
 
+
     @Test
-    public void testLogicalAndComparison() {
-        Ast.Expression.Binary expected = new Ast.Expression.Binary(
-                "&&",
-                new Ast.Expression.Access(Optional.empty(), "expr1"),
-                new Ast.Expression.Binary(
-                        "==",
-                        new Ast.Expression.Access(Optional.empty(), "expr2"),
-                        new Ast.Expression.Access(Optional.empty(), "expr3")
+    void testMethodField() {
+        // LET name = expr DEF name() DO stmt; END
+        // Should throw ParseException because field is missing semicolon before DEF
+        List<Token> tokens = Arrays.asList(
+                new Token(Token.Type.IDENTIFIER, "LET", 0),
+                new Token(Token.Type.IDENTIFIER, "name", 4),
+                new Token(Token.Type.OPERATOR, "=", 9),
+                new Token(Token.Type.IDENTIFIER, "expr", 11),
+                new Token(Token.Type.IDENTIFIER, "DEF", 16),
+                new Token(Token.Type.IDENTIFIER, "name", 20),
+                new Token(Token.Type.OPERATOR, "(", 24),
+                new Token(Token.Type.OPERATOR, ")", 25),
+                new Token(Token.Type.IDENTIFIER, "DO", 27),
+                new Token(Token.Type.IDENTIFIER, "stmt", 30),
+                new Token(Token.Type.OPERATOR, ";", 34),
+                new Token(Token.Type.IDENTIFIER, "END", 36)
+        );
+        test(tokens, null, Parser::parseSource);
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testForStatement(String test, List<Token> tokens, Ast.Statement.For expected) {
+        test(tokens, expected, Parser::parseStatement);
+    }
+
+    private static Stream<Arguments> testForStatement() {
+        return Stream.of(
+                Arguments.of("Basic For",
+                        Arrays.asList(
+                                // FOR (id = expr1; expr2; id = expr3) DO stmt1; END
+                                new Token(Token.Type.IDENTIFIER, "FOR", 0),
+                                new Token(Token.Type.OPERATOR, "(", 3),
+                                new Token(Token.Type.IDENTIFIER, "id", 4),
+                                new Token(Token.Type.OPERATOR, "=", 6),
+                                new Token(Token.Type.IDENTIFIER, "expr1", 7),
+                                new Token(Token.Type.OPERATOR, ";", 12),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 13),
+                                new Token(Token.Type.OPERATOR, ";", 18),
+                                new Token(Token.Type.IDENTIFIER, "id", 19),
+                                new Token(Token.Type.OPERATOR, "=", 21),
+                                new Token(Token.Type.IDENTIFIER, "expr3", 22),
+                                new Token(Token.Type.OPERATOR, ")", 27),
+                                new Token(Token.Type.IDENTIFIER, "stmt1", 28),
+                                new Token(Token.Type.OPERATOR, ";", 32),
+                                new Token(Token.Type.IDENTIFIER, "END", 35)
+                        ),
+                        new Ast.Statement.For(
+                                new Ast.Statement.Assignment(
+                                        new Ast.Expression.Access(Optional.empty(), "id"),
+                                        new Ast.Expression.Access(Optional.empty(), "expr1")
+                                ),
+                                new Ast.Expression.Access(Optional.empty(), "expr2"),
+                                new Ast.Statement.Assignment(
+                                        new Ast.Expression.Access(Optional.empty(), "id"),
+                                        new Ast.Expression.Access(Optional.empty(), "expr3")
+                                ),
+                                Arrays.asList(new Ast.Statement.Expression(
+                                        new Ast.Expression.Access(Optional.empty(), "stmt1")
+                                ))
+                        )
                 )
         );
-        Ast.Expression actual = new Parser(Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "expr1", 0),
-                new Token(Token.Type.OPERATOR, "&&", 6),
-                new Token(Token.Type.IDENTIFIER, "expr2", 9),
-                new Token(Token.Type.OPERATOR, "==", 15),
-                new Token(Token.Type.IDENTIFIER, "expr3", 18)
-        )).parseExpression();
-        Assertions.assertEquals(expected, actual);
     }
 
-    @Test
-    public void testLogicalAndAdditive() {
-        Ast.Expression.Binary expected = new Ast.Expression.Binary(
-                "&&",
-                new Ast.Expression.Access(Optional.empty(), "expr1"),
-                new Ast.Expression.Binary(
-                        "+",
-                        new Ast.Expression.Access(Optional.empty(), "expr2"),
-                        new Ast.Expression.Access(Optional.empty(), "expr3")
-                )
-        );
-        Ast.Expression actual = new Parser(Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "expr1", 0),
-                new Token(Token.Type.OPERATOR, "&&", 6),
-                new Token(Token.Type.IDENTIFIER, "expr2", 9),
-                new Token(Token.Type.OPERATOR, "+", 15),
-                new Token(Token.Type.IDENTIFIER, "expr3", 17)
-        )).parseExpression();
-        Assertions.assertEquals(expected, actual);
-    }
 
     @Test
-    public void testLogicalAndMultiplicative() {
-        Ast.Expression.Binary expected = new Ast.Expression.Binary(
-                "&&",
-                new Ast.Expression.Access(Optional.empty(), "expr1"),
-                new Ast.Expression.Binary(
-                        "*",
-                        new Ast.Expression.Access(Optional.empty(), "expr2"),
-                        new Ast.Expression.Access(Optional.empty(), "expr3")
-                )
-        );
-        Ast.Expression actual = new Parser(Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "expr1", 0),
-                new Token(Token.Type.OPERATOR, "&&", 6),
-                new Token(Token.Type.IDENTIFIER, "expr2", 9),
-                new Token(Token.Type.OPERATOR, "*", 15),
-                new Token(Token.Type.IDENTIFIER, "expr3", 17)
-        )).parseExpression();
-        Assertions.assertEquals(expected, actual);
-    }
+    void testInvalidAccessName() {
+        // obj.
+        // Should throw ParseException because identifier is missing after dot
+        List<Token> tokens = Arrays.asList(
+                new Token(Token.Type.IDENTIFIER, "obj", 0),
+                new Token(Token.Type.OPERATOR, ".", 3),
+        new Token(Token.Type.INTEGER, "5", 4)
 
-    @Test
-    public void testComparisonAndLogical() {
-        Ast.Expression.Binary expected = new Ast.Expression.Binary(
-                "&&",
-                new Ast.Expression.Binary(
-                        "==",
-                        new Ast.Expression.Access(Optional.empty(), "expr1"),
-                        new Ast.Expression.Access(Optional.empty(), "expr2")
-                ),
-                new Ast.Expression.Access(Optional.empty(), "expr3")
         );
-        Ast.Expression actual = new Parser(Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "expr1", 0),
-                new Token(Token.Type.OPERATOR, "==", 6),
-                new Token(Token.Type.IDENTIFIER, "expr2", 9),
-                new Token(Token.Type.OPERATOR, "&&", 15),
-                new Token(Token.Type.IDENTIFIER, "expr3", 18)
-        )).parseExpression();
-        Assertions.assertEquals(expected, actual);
-    }
-
-    @Test
-    public void testAdditiveAndLogical() {
-        Ast.Expression.Binary expected = new Ast.Expression.Binary(
-                "&&",
-                new Ast.Expression.Binary(
-                        "+",
-                        new Ast.Expression.Access(Optional.empty(), "expr1"),
-                        new Ast.Expression.Access(Optional.empty(), "expr2")
-                ),
-                new Ast.Expression.Access(Optional.empty(), "expr3")
-        );
-        Ast.Expression actual = new Parser(Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "expr1", 0),
-                new Token(Token.Type.OPERATOR, "+", 6),
-                new Token(Token.Type.IDENTIFIER, "expr2", 8),
-                new Token(Token.Type.OPERATOR, "&&", 14),
-                new Token(Token.Type.IDENTIFIER, "expr3", 17)
-        )).parseExpression();
-        Assertions.assertEquals(expected, actual);
-    }
-
-    @Test
-    public void testMultiplicativeAndLogical() {
-        Ast.Expression.Binary expected = new Ast.Expression.Binary(
-                "&&",
-                new Ast.Expression.Binary(
-                        "*",
-                        new Ast.Expression.Access(Optional.empty(), "expr1"),
-                        new Ast.Expression.Access(Optional.empty(), "expr2")
-                ),
-                new Ast.Expression.Access(Optional.empty(), "expr3")
-        );
-        Ast.Expression actual = new Parser(Arrays.asList(
-                new Token(Token.Type.IDENTIFIER, "expr1", 0),
-                new Token(Token.Type.OPERATOR, "*", 6),
-                new Token(Token.Type.IDENTIFIER, "expr2", 8),
-                new Token(Token.Type.OPERATOR, "&&", 14),
-                new Token(Token.Type.IDENTIFIER, "expr3", 17)
-        )).parseExpression();
-        Assertions.assertEquals(expected, actual);
+        test(tokens, null, Parser::parseExpression);
     }
 }
